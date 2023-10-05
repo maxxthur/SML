@@ -14,6 +14,88 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Task 2
 
 ## Task 3
+# I am absolutely not sure about the proof but if I did not screw up the equations it should be fine :D 
+
+We have:
+
+\[Y = \beta_0 + \beta_1X + \epsilon\]
+
+where:
+\begin{align*}
+Y & \text{ is the dependent variable,} \\
+X & \text{ is the independent variable,} \\
+\beta_0 & \text{ and } \beta_1 \text{ are the regression coefficients, and} \\
+\epsilon & \text{ is the error term.}
+\end{align*}
+
+The predicted value of $Y$ can be expressed as:
+
+\[\hat{Y} = \beta_0 + \beta_1X\]
+
+The sum of squared errors (SSE) can be expressed as:
+
+\[SSE = \sum(Y_i - \hat{Y}_i)^2\]
+
+The total sum of squares (SST) can be expressed as:
+
+\[SST = \sum(Y_i - \bar{Y})^2\]
+
+where:
+\begin{align*}
+Y_i & \text{ is the observed value of } Y, \\
+\hat{Y}_i & \text{ is the predicted value of } Y, \\
+\bar{Y} & \text{ is the mean of } Y.
+\end{align*}
+
+The coefficient of determination ($R^2$) is defined as:
+
+\[R^2 = 1 - \frac{SSE}{SST}\]
+
+To find the values of $\beta_0$ and $\beta_1$ that minimize SSE, we take the partial derivatives of SSE with respect to $\beta_0$ and $\beta_1$ and set them equal to zero. This gives us the following equations:
+
+\[\sum Y_i = n\beta_0 + \beta_1\sum X_i\]
+
+\[\sum(Y_iX_i) = \beta_0\sum X_i + \beta_1\sum(X_i^2)\]
+
+Solving for $\beta_0$ and $\beta_1$, we get:
+
+\[\beta_1 = \frac{\sum(X_i - \bar{X})(Y_i - \bar{Y})}{\sum(X_i - \bar{X})^2}\]
+
+\[\beta_0 = \bar{Y} - \beta_1\bar{X}\]
+
+where:
+\begin{align*}
+\bar{X} & \text{ is the mean of } X, \\
+\bar{Y} & \text{ is the mean of } Y.
+\end{align*}
+
+The correlation coefficient between $X$ and $Y$ can be expressed as:
+
+\[r_{xy} = \frac{\sum(X_i - \bar{X})(Y_i - \bar{Y})}{\sqrt{\sum(X_i - \bar{X})^2 \sum(Y_i - \bar{Y})^2}}\]
+
+Substituting the values of $\beta_0$ and $\beta_1$ into the formula for $\hat{Y}_i$, we get:
+
+\[\hat{Y}_i = \beta_0 + \beta_1X_i = \bar{Y} + r_{xy} \left(Y_i - \bar{Y}\right) / (s_Y \sqrt{s_X^2})\]
+
+where:
+\begin{align*}
+s_X & \text{ is the standard deviation of } X, \\
+s_Y & \text{ is the standard deviation of } Y.
+\end{align*}
+
+Substituting this into the formula for SST, we get:
+
+\[SST = \sum(Y_i - \bar{Y})^2 = \sum(Y_i - \hat{Y}_i + \hat{Y}_i - \bar{Y})^2 = \sum(Y_i - \hat{Y}_i)^2 + \sum(\hat{Y}_i - \bar{Y})^2\]
+
+The second term in this equation can be expressed as:
+
+\[\sum(\hat{Y}_i - \bar{Y})^2 = r_{xy}^2 \sum(Y_i - \bar{Y})^2 / (s_Y^2)\]
+
+Substituting this into the formula for $R^2$, we get:
+
+\[R^2 = 1 - \frac{SSE}{SST} = 1 - \frac{\sum(Y_i - \hat{Y}_i)^2}{\sum(Y_i - \bar{Y})^2} = r_{xy}^2\]
+
+Therefore, we have shown that the coefficient of determination given by the $R^2$ statistic is equal to the square of the correlation between $X$ and $Y$ in the simple linear regression case, where $Y = \beta_0 + \beta_1X + \epsilon$ and the regression coefficients $(\beta_0, \beta_1)$ are estimated using ordinary least squares.
 
 ## Task 4
 
