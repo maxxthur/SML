@@ -62,6 +62,46 @@ Covariance Structure: The covariance structure of the response variables (output
 
 ## Task 2
 
+The question asks to show that the expected value of the MSE of the ordinary least squares estimate obtained for the training data is less than or equal to the expected value of the MSE of the same estimate for the test data. The MSE is the mean of the squared differences between the predicted and actual values of the response variable. The MSE is calculated using the training data for the training MSE and the test data for the test MSE.
+To show that the expected value of the MSE of the ordinary least squares estimate obtained for the training data is less than or equal to the expected value of the MSE of the same estimate for the test data, we need to show that:
+
+$$
+\mathrm{E}\left[\frac{1}{N} \sum_{i=1}^N\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2\right] \leq \mathrm{E}\left[\frac{1}{M} \sum_{i=1}^M\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2\right]
+$$
+
+Taking the expectation of both sides, we get:
+
+$$
+\mathrm{E}\left[\mathrm{E}\left[\frac{1}{N} \sum_{i=1}^N\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2\right]\right] \leq \mathrm{E}\left[\mathrm{E}\left[\frac{1}{M} \sum_{i=1}^M\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2\right]\right]
+$$
+
+By the law of iterated expectations, we can simplify this to:
+
+$$
+\mathrm{E}\left[\frac{1}{N} \sum_{i=1}^N \mathrm{E}\left[\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2\right]\right] \leq \mathrm{E}\left[\frac{1}{M} \sum_{i=1}^M \mathrm{E}\left[\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2\right]\right]
+$$
+
+Since the expectations are over all that is random in each expression, we can replace them with their respective variances:
+
+$$
+\frac{1}{N} \sum_{i=1}^N \operatorname{Var}\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right) \leq \frac{1}{M} \sum_{i=1}^M \operatorname{Var}\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)
+$$
+
+Expanding the variances, we get:
+
+$$
+\begin{aligned}
+& \frac{1}{N} \sum_{i=1}^N \operatorname{Var}\left(y_i\right)+\operatorname{Var}\left(\boldsymbol{x}_i^{\top} \hat{\beta}\right)-2 \operatorname{Cov}\left(y_i, \boldsymbol{x}_i^{\top} \hat{\beta}\right) \leq \frac{1}{M} \sum_{i=1}^M \operatorname{Var}\left(y_i\right)+\operatorname{Var}\left(\boldsymbol{x}_i^{\top} \hat{\beta}\right)- \\
+& 2 \operatorname{Cov}\left(y_i, \boldsymbol{x}_i^{\top} \hat{\beta}\right)
+\end{aligned}
+$$
+
+Since the training and test data are drawn at random from the same population, we can assume that they have the same distribution and therefore the same variances and covariances. Thus, we can simplify the inequality to:
+
+$\frac{1}{N} \sum_{i=1}^N \operatorname{Var}\left(y_i\right) \leq \frac{1}{M} \sum_{i=1}^M \operatorname{Var}\left(y_i\right)$
+
+This inequality holds because the training data is a subset of the test data, so the variance of the training data is expected to be less than or equal to the variance of the test data. Therefore, we have shown that the expected value of the MSE of the ordinary least squares estimate obtained for the training data is less than or equal to the expected value of the MSE of the same estimate for the test data.
+
 ## Task 3
 # I am absolutely not sure about the proof but if I did not screw up the equations it should be fine :D 
 
