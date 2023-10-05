@@ -15,7 +15,20 @@ Consider a balanced regression problem where for each input $x_i, \; i = 1,...,N
 
 * Show that the fit can be obtained from a least squares problem involving only xi and the average values $\overline{y_i} =\frac{1}{J} \sum_{j = 1}^{J} y_{ij}$
 
+The problem basically says that we have $N$ groups, and for each we have $J$ realizations $y_{ij}$. Therefore, we will indicate from now on the total number of observations as $K = N \times J$. The least squares problem is the following:
 
+\begin{aligned}
+
+RSS \; = \; sum_k^K  \(y_k - f_{\theta}(x) \)^2 = \\
+
+sum_k^K  \(y_k - \overline{y_k} + \overline{y_k} - f_{\theta}(x) \)^2 = \\
+
+sum_k^K  \(y_k - \overline{y_k} \)^2 \; + \; 2 \; sum_k^K \(y_k - \overline{y_k} \) \(\overline{y_k} - f_{\theta}(x) \) \;
++ \; sum_k^K \(\overline{y_k} - f_{\theta}(x) \)^2 \\
+
+sum_k^K  \(y_k - \overline{y_k} \)^2 \; + \; 2 \; sum_i^N \(y_k - \overline{y_k} \) \(\overline{y_k} - f_{\theta}(x) \) \;
+
+\end{aligned}
 ## Task 2
 
 ## Task 3
