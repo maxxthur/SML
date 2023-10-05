@@ -98,7 +98,9 @@ $$
 
 Since the training and test data are drawn at random from the same population, we can assume that they have the same distribution and therefore the same variances and covariances. Thus, we can simplify the inequality to:
 
-$\frac{1}{N} \sum_{i=1}^N \operatorname{Var}\left(y_i\right) \leq \frac{1}{M} \sum_{i=1}^M \operatorname{Var}\left(y_i\right)$
+$$
+\frac{1}{N} \sum_{i=1}^N \operatorname{Var}\left(y_i\right) \leq \frac{1}{M} \sum_{i=1}^M \operatorname{Var}\left(y_i\right)
+$$
 
 This inequality holds because the training data is a subset of the test data, so the variance of the training data is expected to be less than or equal to the variance of the test data. Therefore, we have shown that the expected value of the MSE of the ordinary least squares estimate obtained for the training data is less than or equal to the expected value of the MSE of the same estimate for the test data.
 
