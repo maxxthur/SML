@@ -1,0 +1,237 @@
+---
+title: "Assignment 1"
+author: "Group 2"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Task 1
+
+## Task 2
+
+## Task 3
+
+## Task 4
+
+## Task 5
+
+## Task 6
+
+## Task 7
+
+```{r}
+# load data
+data("diabetes", package = "lars")
+
+# matrices can apparently be columns in df..
+# good to know
+y <- rnorm(100)
+x1 = rnorm(100)
+x2 = rnorm(100)
+x <- cbind(x1, x2) 
+df <- data.frame(y = y, x = I(x))
+
+# but this complicates things so we break up the 
+# structure and make a nice df 
+# function to get rid of Asis
+unAsIs <- function(X) {
+    if("AsIs" %in% class(X)) {
+        class(X) <- class(X)[-match("AsIs", class(X))]
+    }
+    X
+}
+
+# extract y and x
+y <- diabetes$y
+x <- unAsIs(diabetes$x)
+
+# make a new df with all the data
+diabetes_df <- as.data.frame(cbind(y, x))
+
+```
+As instructed, we now set a seed and sample row indices from the set of integers running from 1 to the number of observations with equal probability. 
+
+```{r}
+# set seed
+set.seed(12)
+
+# split the data into train and test
+# step 1: sample 400 indices
+ind <- sample(x = 1:nrow(diabetes_df), size = 400)
+
+# subset the datasets as instructed
+train <- diabetes_df[ind, ]
+test <- diabetes_df[-ind, ]
+```
+
+The reason why random sampling is a good idea is that we are not really familiar with the dataset. Specifically we do not know whether observations were sorted by any of the variables available and if so we do not know at all by which one. Just taking the 400 first observations then would lead the information contained in training and test data to be biased by sorting leading ultimately to sampling bias in our estimations. 
+
+INSERT EXPLANATION ABOUT STANDARDIZED VARIABLES HERE.
+
+To analyse the correlation structures we simply calculate a matrix with correlation of all columns in our dataset. The first column contains the correlations of the variables in $X$ with $y$ and the other columns and rows respectively contain the correlations between the columns in $X$. In general high absolute values of $corr(X_k, y)$ are desirable because this implies high co- or countermovement of the dependent and independent variables. This at least hints at predictive power of $X_k$, where $k$ is the column index. Contrary, low values for $corr(X_k, X_j)$, $k \neq j$ are desirable as high values would introduce all the problems associated with multicollinearity, most prominently however the variance of the estimates will become inflated. This means nothing else than a loss in precision of estimates. Another huge problem is that multicollinearity is associated with "almost rank deficient" $X'X$ what can lead to problems if we run our model on a computer system. 
+
+```{r}
+library(kableExtra)
+# exploration of correlation
+correlation_matrix <- round(cor(train), 2)
+# eliminate redundancies and make a nice table for the pdf
+correlation_matrix[!lower.tri(correlation_matrix)] <- ""
+kable(correlation_matrix, booktabs = T)
+```
+
+
+```{r}
+# use training data to fit the full model
+# get model formula from column names
+f <- as.formula(paste0("y~", paste(colnames(train)[-1], collapse = "+")))
+
+fit_full <- lm(data = train, formula = f)
+
+# get variables significant at alpha = 0.05
+summary_full <- summary(fit_full)
+coefficients <- summary_full$coefficients
+significant <- which(coefficients[, 4] < 0.05)[-1]
+
+# in sample MSE
+MSE_full_in <- mean(fit_full$residuals^2)
+
+# out of sample MSE
+pred_full <- predict(fit_full, newdata = test)
+MSE_full_out <- mean((test$y - pred_full)^2)
+
+message(paste("In sample MSE is", MSE_full_in, sep = ": "))
+message(paste("Out of sample MSE is", MSE_full_out, sep = ": "))
+```
+
+```{r}
+# use the significant variables only 
+f2 <- as.formula(paste0("y~", paste(colnames(train)[significant], collapse = "+")))
+
+# estimate smaller model
+fit_sig <- lm(data = train, formula = f2)
+
+# in sample MSE
+MSE_sig_in <- mean(fit_sig$residuals^2)
+
+# out of sample MSE
+pred_sig <- predict(fit_sig, newdata = test)
+MSE_sig_out <- mean((test$y - pred_sig)^2)
+
+message(paste("In sample MSE is", MSE_sig_in, sep = ": "))
+message(paste("Out of sample MSE is", MSE_sig_out, sep = ": "))
+
+# F-Test
+anova(fit_full, fit_sig)
+```
+
+
+## Task 8
+
+The Akaike criterion is in general given by 
+
+$$
+  AIC = 2K - ln(L)
+$$
+where $K$ is the number of regressors and $L$ is the likelihood of the model. Since $2K$ is a penalty term, AIC is to be minimized to find the most appropriate model. 
+
+### Best Subset Selection
+
+Best subset selection is basically just getting all $2^P$ possible combinations of explanatory variables available to us and estimating the corresponding regression models. It would be conventient to use the leaps package for this task but there the AIC-criterion is not implemented but only SIC and BIC. So we have to construct the models ourselves, estimate them and calculate AIC.
+
+First we write a function that calculates all possible combinations of regressors and gives back the associated regression formulas. We will not use the leaps and bounds algorithm as the dataset is not to big. 
+
+```{r}
+# write function to get formulas
+bs_formulas <- function(x = train, dep = "y", intercept_only = T) {
+  # extract variables names
+  vars <- names(x)
+  exps <- vars[vars != dep]
+  
+  # get all combinations
+ f <- lapply(1:length(exps), function(k) {
+    # get combinations for given k
+    combinations <- combn(exps, m = k, simplify = F)
+    # make it a regression formula
+    formulas <- lapply(combinations, function(c) {
+      paste(dep, paste(c, collapse = "+"), sep = "~")
+    })
+    # make it a vector again
+    unlist(formulas)
+    }) 
+  # dissolve list again
+  output <- unlist(f)
+  
+  if(intercept_only == T) output <- c(as.formula("y ~ 1"), output)
+  
+  return(output)
+}
+```
+
+Then we estimate the models
+
+```{r}
+# get formulas
+formulas <- bs_formulas() # look at defaults set above
+
+# estimate all models
+fits <- lapply(formulas, function(f) lm(data = train, formula = f))
+
+# get log likelihoods
+LL <- unlist(lapply(fits, function(f) logLik(f)[1]))
+
+# get number of regressors (K)
+K <- unlist(lapply(fits, function(fit) length(fit$coefficients)))
+
+# get AIC
+AIC <- 2 * K - 2 * LL
+
+# get the most appropriate model
+best_index <- which.min(AIC)
+
+# display it
+formulas[[best_index]]
+```
+Now that we have identified the best model we can assess its in- and out-of-sample performance using MSE again.
+
+```{r}
+# get in sample MSE
+MSE_BS_in <- mean(fits[[best_index]]$residuals^2)
+
+# get out of sample MSE
+MSE_BS_out <- mean((test$y - predict(fits[[best_index]], newdata = test))^2)
+```
+Finally we conduct an F-Test of the identified model against the full model.
+
+```{r}
+anova(fits[[best_index]], fits[[length(fits)]]) # last model is the full one by construction
+```
+
+### Backward Stepwise
+
+Here we are lucky because the MASS package provides us with a function that does stepwise regression based on AIC. 
+
+```{r}
+library(MASS)
+
+# conduct backwards stepwise regression
+backwards_step <- stepAIC(fit_full, direction = "backward")
+
+# get in sample MSE
+MSE_backwards_in <- mean(backwards_step$residuals^2)
+
+# get out of sample MSE
+
+MSE_backwards_out <- mean((test$y - predict(backwards_step, newdata = test))^2)
+
+anova(fit_full, backwards_step)
+```
+
+
+## Task 9
+
+## Task 10
+
