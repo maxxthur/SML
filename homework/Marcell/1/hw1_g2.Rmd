@@ -234,7 +234,7 @@ anova(fit_full, backwards_step)
 ## Task 9
 
 ## Task 10
-
+```{r}
 forwardstagewise <- function(x, y, tol = sqrt(.Machine$double.eps)) {
  
   if (!is.matrix(x)) {
@@ -286,3 +286,4 @@ forwardstagewise(x, y, tol = 0.01)
 
 
 #this is what I have so far 
+```
