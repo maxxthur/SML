@@ -50,6 +50,16 @@ Using these weights, we can rewrite the RSS function as:
 
 This is a reduced weighted least squares estimation, which shows that the fit can be obtained from a least squares problem involving only \(x_i\) and the average values \(y_i\).
 
+
+How does the least squares problem change?
+
+Unequal Weights: In an unbalanced design, each observation (combination of $x_{i}$ and $y_{ij} $) does not carry the same weight in the least squares objective function. Inputs with more repetitions contribute more to the objective function than those with fewer repetitions. This is because there are more data points associated with inputs that have more repetitions.
+
+Varying Variances: The assumption of equal variances across all observations may not hold in an unbalanced design. Inputs with more repetitions tend to have smaller variances because they provide more information about the underlying population. In contrast, inputs with fewer repetitions have larger variances, indicating more uncertainty in their measurements.
+
+Covariance Structure: The covariance structure of the response variables (outputs) may become more complex in unbalanced designs. Correlation between repeated measurements within the same input can exist, and the correlations may vary across different inputs.
+
+
 ## Task 2
 
 ## Task 3
@@ -135,6 +145,8 @@ Substituting this into the formula for $R^2$, we get:
 \[R^2 = 1 - \frac{SSE}{SST} = 1 - \frac{\sum(Y_i - \hat{Y}_i)^2}{\sum(Y_i - \bar{Y})^2} = r_{xy}^2\]
 
 Therefore, we have shown that the coefficient of determination given by the $R^2$ statistic is equal to the square of the correlation between $X$ and $Y$ in the simple linear regression case, where $Y = \beta_0 + \beta_1X + \epsilon$ and the regression coefficients $(\beta_0, \beta_1)$ are estimated using ordinary least squares.
+
+
 
 ## Task 4
 
