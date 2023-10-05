@@ -235,3 +235,54 @@ anova(fit_full, backwards_step)
 
 ## Task 10
 
+forwardstagewise <- function(x, y, tol = sqrt(.Machine$double.eps)) {
+ 
+  if (!is.matrix(x)) {
+    stop("x must be a matrix")
+  }
+  if (!is.numeric(y)) {
+    stop("y must be numeric")
+  }
+  if (length(y) != nrow(x)) {
+    stop("The number of rows in x must be equal to the length of y")
+  }
+  
+  
+  x_centered <- scale(x, center = TRUE, scale = FALSE)
+  y_centered <- scale(y, center = TRUE, scale = FALSE)
+  
+  
+  beta <- rep(0, ncol(x))
+  r <- y_centered
+  
+ 
+  coef_matrix <- matrix(0, ncol = ncol(x), nrow = ncol(x))
+  
+  # forward stagewise regression
+  for (j in 1:ncol(x)) {
+
+    # Compute the correlation between the residuals and each predictor
+    corr <- apply(x_centered, 2, function(z) cor(z, r))
+    
+    
+    j_star <- which.max(abs(corr))
+    
+    # Update the coefficients and residuals
+    beta[j_star] <- beta[j_star] + corr[j_star] * tol
+    r <- r - x_centered[, j_star] * corr[j_star] * tol
+    
+    # Store the coefficients in the matrix
+    coef_matrix[j, ] <- beta
+  }
+  
+  # Return the matrix of coefficients
+  return(coef_matrix)
+}
+#example 
+set.seed(123)
+x <- matrix(rnorm(100), ncol = 5)
+y <- rnorm(20)
+forwardstagewise(x, y, tol = 0.01)
+
+
+#this is what I have so far 
