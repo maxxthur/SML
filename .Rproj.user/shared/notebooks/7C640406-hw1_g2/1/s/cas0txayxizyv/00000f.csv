@@ -1,0 +1,5 @@
+"0","data(""Wage"", package = ""ISLR"")
+"
+"2","Error in find.package(package, lib.loc, verbose = verbose) : 
+  es gibt kein Paket namens ‘ISLR’
+"

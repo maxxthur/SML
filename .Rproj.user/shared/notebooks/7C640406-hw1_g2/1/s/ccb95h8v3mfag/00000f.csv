@@ -1,0 +1,10 @@
+"0","# kick if there is a constant and print a message to know which one were  kicked
+for(i in 1:length(count_uniq)) {
+  if(count_uniq[[i]] == 1) {
+    Wage[, names(count_uniq)[i]] <- NULL
+    message(names(count_uniq)[i], "" was kicked because it is a constant."")
+  }
+}
+"
+"2","region was kicked because it is a constant.
+"
