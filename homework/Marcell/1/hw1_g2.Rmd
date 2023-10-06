@@ -192,6 +192,68 @@ Therefore, we have shown that the coefficient of determination given by the $R^2
 
 ## Task 4
 
+Given a linear regression model with 
+$$
+\boldsymbol{y}=\boldsymbol{X} \beta+\epsilon
+$$
+
+where $\mathrm{E}(\epsilon)=\mathbf{0}$, $\operatorname{Var}(\epsilon)=\sigma^2 \boldsymbol{I}$
+, and $\boldsymbol{X}$ is orthonormal, we need to show that there always exists a value of the penalty parameter $\lambda$ such that the ridge estimator has lower mean squared error than the OLS estimator.
+The ridge estimator is given by 
+
+$$
+\hat{\beta}^{\text {ridge }}(\lambda)=\left(\boldsymbol{X}^{\top} \boldsymbol{X}+\lambda \boldsymbol{I}\right)^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}
+$$
+, and the OLS estimator is given by 
+
+$$
+\tilde{\beta}=(\boldsymbol{X}^{\top} \boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}
+$$.
+
+The mean squared error of an estimator $\hat{\beta}$ is given by 
+
+$$
+\mathrm{E}\left[(\hat{\beta}-\beta)^{\top}(\hat{\beta}-\beta)\right]
+$$.
+
+Since $\boldsymbol{X}$ is orthonormal, we have $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$, and therefore the OLS estimator simplifies to $\tilde{\beta}=\boldsymbol{X}^{\top} \boldsymbol{y}$.
+The mean squared error of the OLS estimator is then 
+
+$$
+\mathrm{E}\left[(\tilde{\beta}-\beta)^{\top}(\tilde{\beta}-\beta)\right]=\mathrm{E}\left[(\boldsymbol{X}^{\top} \boldsymbol{y}-\beta)^{\top}(\boldsymbol{X}^{\top} \boldsymbol{y}-\beta)\right]
+$$.
+
+Using the fact that $\boldsymbol{X}$ is orthonormal, we can rewrite the ridge estimator as 
+
+$$
+\hat{\beta}^{\text {ridge }}(\lambda)=\boldsymbol{X}^{\top}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{y}
+$$.
+The mean squared error of the ridge estimator is then 
+
+$$
+\mathrm{E}\left[(\hat{\beta}^{\text {ridge }}(\lambda)-\beta)^{\top}(\hat{\beta}^{\text {ridge }}(\lambda)-\beta)\right]=\mathrm{E}\left[(\boldsymbol{X}^{\top}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{y}-\beta)^{\top}(\boldsymbol{X}^{\top}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{y}-\beta)\right]
+$$.
+
+To show that there exists a value of $\lambda$ such that the ridge estimator has lower mean squared error than the OLS estimator, we need to show that there exists a value of $\lambda$ such that 
+
+$$
+\mathrm{E}\left[(\hat{\beta}^{\text {ridge }}(\lambda)-\beta)^{\top}(\hat{\beta}^{\text {ridge }}(\lambda)-\beta)\right]<\mathrm{E}\left[(\boldsymbol{X}^{\top} \boldsymbol{y}-\beta)^{\top}(\boldsymbol{X}^{\top} \boldsymbol{y}-\beta)\right]
+$$.
+
+This inequality can be rewritten as 
+
+$$
+\mathrm{E}\left[\boldsymbol{y}^{\top}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{X}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{y}\right]<\mathrm{E}\left[\boldsymbol{y}^{\top} \boldsymbol{X}(\boldsymbol{X}^{\top} \boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}\right]
+$$.
+
+Using the fact that $\boldsymbol{X}$ is orthonormal, we have $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$, and therefore the inequality simplifies to 
+
+$$
+\mathrm{E}\left[\boldsymbol{y}^{\top}(\boldsymbol{I}+\lambda (\boldsymbol{X}^{\top} \boldsymbol{X})^{-1})^{-2} \boldsymbol{y}\right]<\mathrm{E}\left[\boldsymbol{y}^{\top} \boldsymbol{y}\right]
+$$.
+This inequality holds for any value of $\lambda>0$, since the left-hand side is a decreasing function of $\lambda$ and the right-hand side is a constant. Therefore, there always exists a value of the penalty parameter $\lambda$ such that the ridge estimator has lower mean squared error than the OLS estimator.
+
+
 ## Task 5
 
 ## Task 6
