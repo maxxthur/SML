@@ -19,6 +19,21 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Task 5
 
+The $k$-nearest-neighbour representation is defined as:
+$$\hat f(x_0) = \frac{1}{k}\sum_{i=1}^N  \mathbf{1}_{x_i \in N_k(x_0)}y_i$$
+where $N_k(x_0)$ is the neighborhood of $x_0$ defined by the $k$ closest points $x_i$. Therefore the weights are 
+$$\ell_i(x_0; \mathcal X) = \frac{1}{k} \mathbf{1}_{x_i \in N_k(x_0)}$$
+and the $k$-nearest-neighbor regression is a member of this class.
+
+
+For the linear regression the we can predict $f$ by 
+$$\hat f(x_0) = x_0^T \beta$$
+where $\beta = (X^T X)^{-1} X^T y$.  Therefore we have
+$$\hat f(x_0) = \sum_{i=1}^N \left( x_0^T (X^T X)^{-1} X^T \right)_i y_i.$$
+Hence the weights are
+$$\ell_i(x_0; \mathcal X) = \left( x_0^T (X^T X)^{-1} X^T \right)_i$$
+and the linear regression is part of this class.
+
 ## Task 6
 
 ## Task 7
