@@ -500,7 +500,7 @@ colnames(x) <- 1:31 # name by col index
 col_ind <- sort(sample(1:31, size = 10))
 
 # draw coefficient from N(0, 0.4)
-random_coef <- rnorm(n = 10, mean = 0, sd = sqrt(0.4))# assuming that you give the variance in the instructions
+random_coef <- rnorm(n = 10, mean = 0, sd = sqrt(0.4)) # assuming that you give the variance in the instructions
 
 # get noise
 noise <- rnorm(300, mean = 0, sd = sqrt(6.25))
@@ -537,7 +537,7 @@ y_c <- y_noise - mean(y_noise)
 x_c <- sweep(x, 2, colMeans(x), '-')
 
 # perform best subset selection (maybe force out the intercept as it should be 0!)
-best_subset <- regsubsets(x = x_c, y = y_c, method = "exhaustive", nvmax = 31, id = 10)
+best_subset <- regsubsets(x = x_c, y = y_c, method = "exhaustive", nvmax = 31)
 
 # as we know the true process has 10 relevant variables we extract
 # the model that was best for 10 variables
@@ -555,11 +555,84 @@ included_bs <- as.numeric(names(best_10[best_10 == T])[-1])
 # compare the result with the sampled col indices
 included_bs == col_ind # they are the same
 
-# we can also 
+coef(best_subset, 31)
 
 ```
 
-```{r}
+```{r, echo=FALSE}
+# specify params of multivariate normal
+mu <- rep(0, 31) # as standard normal has mu = 0
+sigma <- diag(x = 1, nrow = 31) # sigma is 1 in standard normal
+sigma[!diag(x = T, nrow = 31)] <- 0.85 # add covariances to off diags
 
+# Conduct the simulation
+b_list <- vector(mode = "list", length = 50)
+for(i in 1:50) {
+  message(paste("Simulation Step:", i))
+  x <- mvrnorm(n = 300, mu = mu, Sigma = sigma)
+  colnames(x) <- 1:31 # name by col index
+
+  # sample column indices to select randomly which of the 31 variables   # define y
+  col_ind <- sort(sample(1:31, size = 10))
+
+  # draw coefficient from N(0, 0.4)
+  random_coef <- rnorm(n = 10, mean = 0, sd = sqrt(0.4)) # assuming     that you give the variance in the instructions
+  
+  # make true coefficient vector
+  true_b <- matrix(rep(0, 31), ncol = 1)
+  true_b[col_ind,] <- random_coef
+
+  # get noise
+  noise <- rnorm(300, mean = 0, sd = sqrt(6.25))
+  
+  # get y 
+  y <- x %*% true_b + noise
+  
+  # center x and y 
+  x_c <- sweep(x, 2, colMeans(x), "-")
+  y_c <- y - mean(y)
+  
+  # calculate best subset 
+  best_subset <- regsubsets(x = x_c, y = y_c, nvmax = 31)
+  
+  # choose the best overall model via minimal BIC
+  best_model_bs <- which.min(summary(best_subset)$bic)
+  best_bs_coef <- coef(best_subset, best_model_bs)[-1] # remove intercept as 0 anyway
+  
+  # get the appropriate model according to forwardstagewise
+  evolution_fsw <- forwardstagewise(x = x, y = y)
+  model_fsw <- evolution_fsw[ncol(evolution_fsw), ]
+  
+  # make all coef objects vectors 
+  true_b_v <- true_b[, 1]
+  best_bs_v <- rep(0, 31)
+  best_bs_v[as.integer(names(best_bs_coef))] <- best_bs_coef
+  fsw_v <- model_fsw
+  
+  b_list[[i]] <- cbind(true_b_v, best_bs_v, fsw_v)
+}
+
+# calculate sum of squares for each iteration
+sum_squares_list <- lapply(b_list, function(b) {
+  best_bs <- sum((b[,1] - b[,2])^2)
+  fsw <- sum((b[,1] - b[,3])^2)
+  c(best_bs = best_bs, fsw = fsw)
+})
+
+sum_squares <- as.data.frame(do.call("rbind", sum_squares_list))
+
+# calculate expectation
+expect <- apply(sum_squares, MARGIN = 2, mean)
+expect
+
+# visualize sum of squares from simulation steps with histograms
+sum_squares |> 
+  pivot_longer(cols = everything()) |>
+  ggplot(aes(x = value, fill = name)) +
+  geom_vline(xintercept = expect[1], color = "red") +
+  geom_vline(xintercept = expect[2], color = "blue") +
+  geom_density(alpha = 0.5) +
+  theme_base()
+  
 ```
 
