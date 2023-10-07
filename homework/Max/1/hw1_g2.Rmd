@@ -24,7 +24,7 @@ knitr::opts_chunk$set(echo = TRUE)
 First we write a function to construct $Y$ and another to calculate $EPE$ as given in the task.
 
 ```{r}
-library(class)
+library(caret)
 
 get_xy <- function(p, sigma, N = 500) {
   X <- sapply(1:p, function(x) runif(n = N, min = -1, max = 1))
@@ -34,24 +34,29 @@ get_xy <- function(p, sigma, N = 500) {
   return(df)
 }
 
-get_fx0 <- function(x0 = 0, sigma = 1, data) {
+get_fx0 <- function(x0 = 0, sigma, data) {
   x0_df <- as.data.frame(matrix(rep(x0, ncol(data)-1), nrow = 1))
   names(x0_df) <- names(data)[-1]
-  f <- paste0(names(data)[1], "~", paste(names(data)[-1], collapse = "+"))
+  f <- as.formula(paste0(names(data)[1], "~", paste(names(data)[-1], collapse = "+")))
   # estimate linear model
   l <- lm(data = data, formula = f)
   l_x0 <- predict.lm(l, newdata = x0_df) # its just the intercept what was clear
                                          # but if we specify other x0 the function
                                          # still works
   # estimate knn
-  knn_x0 <- knn(train = data[, -1], cl = data[,1], test = x0_df, k = 1)
+  knn_mod <- knnreg(formula = f, data = data, k = 1)
+  knn_x0 <- predict(knn_mod, newdata = x0_df)
   
   # output the fx0 value
-  data.frame(linear = l_x0, knn = knn_x0)
+  data.frame(linear = l_x0, knn = as.numeric(knn_x0))
 }
  
- <- function(fx0, x_0 = 0) {
-  
+ epe <- function(fx0, x_0 = 0, p, mu = 0, sigma, f = function(x) exp(-8 * sum(x^2))) {
+   x_0 <- rep(x_0, p)
+   noise <- rnorm(n = nrow(fx0), mean = mu, sd = sigma)
+   epe_lm <- mean((f(x_0) + noise  - fx0$linear)^2)
+   epe_knn <- mean((f(x_0) + noise - fx0$knn)^2)
+   return(data.frame(epe_linear = epe_lm, epe_knn = epe_knn))
 }
 ```
 
@@ -65,14 +70,48 @@ grid_split <- with(grid, split(x = grid, f = list(p, sigma)))
 
 # create 1000 datasets per p-sigma combination
 
-data <- lapply(grid_split, function(g) {
+results <- lapply(grid_split, function(g) {
+  # generate specific data sets
   spec <- vector(mode = "list", length = 1000)
   for(m in 1:1000) {
     spec[[m]] <- get_xy(p = g$p, sigma = g$sigma)
   }
+  
+  # evaluate f hat at x_0 = 0
+  fx0 <- do.call("rbind", lapply(spec, function(s) get_fx0(data = s, sigma = g$sigma)))
+  
+  epe_run <- epe(fx0 = fx0, x_0 = 0, p = g$p, mu = 0, sigma = g$sigma)
+  
+  data.frame(p = g$p, sigma = g$sigma, epe_run)
 })
+
+results_bind <- do.call("rbind", results)
+
+saveRDS(results_bind, file = "results_task6.rds")
 ```
 
+We can now inspect the results of the simulation. 
+
+```{r}
+# make a nice plot
+library(ggplot2)
+library(tidyr)
+library(ggthemes)
+library(latex2exp)
+
+results_bind |>
+  pivot_longer(cols = contains("epe")) |>
+  ggplot(aes(x = p, y = value, color = as.factor(sigma), group = as.factor(sigma))) +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = 1:10) +
+  facet_wrap(~ name, nrow = 2) +
+  labs(y = "EPE", color = TeX("$\\sigma$")) +
+  theme_base()
+  
+
+```
+There are two observations here. First, dimensionality increases EPE for both methods. However the linear model experiences the increase earlier but then further increases become smaller while for KNN the increases are smaller but last longer with increasing $p$. Second, an increase in $\sigma$ shifts up EPE almost by its magnitude. This illustrates the irreducible error that is introduced by the noise term which is usually part of the models we think of when describing data generating processes. 
 
 ## Task 7
 
@@ -379,4 +418,148 @@ We see that using orthogonal polynoms changes the coefficients of both age terms
 
 
 ## Task 10
+
+```{r}
+# implementation of forwardstagewise
+forwardstagewise <- function(x, y, tol = sqrt(.Machine$double.eps)) {
+  
+  # checks 
+  check_dim <- length(y) == nrow(x)
+  check_num <- is.numeric(y) & is.numeric(x)
+  
+  if(check_dim == F) stop("Dimensions of x and y are not compatible.")
+  if(check_dim == F) stop("x or y is not a numeric vector (y) or numeric matrix (x).")
+   
+  # center x and y
+  y <- y - mean(y)
+  x <- sweep(x, 2, colMeans(x), '-')
+  
+  # make y a n x 1 matrix
+  y_m <- as.matrix(y)
+  
+  # init a coefficient vector b = 0
+  b <- matrix(rep(0, ncol(x)), byrow = T)
+  
+  # set the residuals to y initially
+  resid <- y_m
+  
+  # get absolute correlations between y and x as starting point
+  res_cor <- abs(cor(resid, x))
+  
+  # initialize empty output matrix
+  output <- matrix(b, ncol = nrow(b))
+
+  count_iter <- 1
+  repeat {
+    # print(count_iter)
+    # identify col index of variable with highest correlation
+    index_high <- which.max(res_cor)
+    
+    # regress residuals on chosen variable
+    b_add <- sum(x[, index_high] * resid) / sum(x[, index_high]^2)
+    
+    # add coefficient to b at the appropriate index
+    b[index_high, ] <- b[index_high,] + b_add
+    
+    output <- rbind(output, matrix(b, ncol = nrow(b))) 
+    
+    # update residuals
+    resid <- y_m - x %*% b 
+    
+    # update absolute residual correlations
+    res_cor <- abs(cor(resid, x))
+    
+    # now check whether we stop
+    if(max(res_cor) < tol) break
+    count_iter <- count_iter + 1
+  }
+  
+  # return output
+  return(output)
+}
+```
+
+
+```{r}
+library(MASS)
+# Simulation: NEEDS TO BE DONE 50 times!
+
+# specify params of multivariate normal
+mu <- rep(0, 31) # as standard normal has mu = 0
+sigma <- diag(x = 1, nrow = 31) # sigma is 1 in standard normal
+sigma[!diag(x = T, nrow = 31)] <- 0.85 # add covariances to off diags
+
+# draw 300 obs from multivariate normal
+{
+  set.seed(123) # ensure that we always get the same numbers
+x <- mvrnorm(n = 300, mu = mu, Sigma = sigma)
+colnames(x) <- 1:31 # name by col index
+
+# sample column indices to select randomly which of the 31 variables 
+# define y
+col_ind <- sort(sample(1:31, size = 10))
+
+# draw coefficient from N(0, 0.4)
+random_coef <- rnorm(n = 10, mean = 0, sd = sqrt(0.4))# assuming that you give the variance in the instructions
+
+# get noise
+noise <- rnorm(300, mean = 0, sd = sqrt(6.25))
+}
+
+# create empty matrix 
+coef_mat <- matrix(rep(NA, 10 * 300), ncol = 10)
+
+# fill columns with randomly drawn coefficients
+for(i in 1:length(random_coef)) coef_mat[, i] <- random_coef[i]
+
+# chose columns of x by drawn indices
+x_chosen <- x[, col_ind]
+
+# get row sum of hadamard product of coefficient matrix and 
+# randomly selected columns from the mult. normal matrix
+y <- apply(coef_mat * x_chosen, MARGIN = 1, FUN = sum)
+
+# add noise as instructed
+y_noise <- y + noise
+
+# test forwardstagewise
+test_fsw <- forwardstagewise(x = x, y = y_noise)
+test_fsw[ncol(test_fsw), ]
+```
+
+```{r}
+library(leaps)
+
+# best subset selection with leaps
+
+# center variables
+y_c <- y_noise - mean(y_noise)
+x_c <- sweep(x, 2, colMeans(x), '-')
+
+# perform best subset selection (maybe force out the intercept as it should be 0!)
+best_subset <- regsubsets(x = x_c, y = y_c, method = "exhaustive", nvmax = 31, id = 10)
+
+# as we know the true process has 10 relevant variables we extract
+# the model that was best for 10 variables
+
+# get summary
+summary_bs <- summary(best_subset)
+
+# extract the which matrix
+models_each_n <- summary_bs$which
+best_10 <- models_each_n[10, ] # maybe we have to choose here by other criterion?
+
+# get included variables indices
+included_bs <- as.numeric(names(best_10[best_10 == T])[-1])
+
+# compare the result with the sampled col indices
+included_bs == col_ind # they are the same
+
+# we can also 
+
+```
+
+```{r}
+
+```
 
