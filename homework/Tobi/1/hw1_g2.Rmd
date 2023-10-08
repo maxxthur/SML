@@ -17,6 +17,21 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Task 4
 
+NOT SURE IF ENOUGH! I also tried to calculate both directly but had then problems comparing them.
+
+OLS estimator: $$\hat{\beta}=(X^TX)^{-1}X^Ty$$
+Ridge estimator: $$\hat{\beta}^{ridge}(\lambda)=(X^TX+\lambda I)^{-1}X^Ty$$
+For $X$ orthonormal we get:\
+
+OLS estimator: $$X^Ty$$
+Ridge estimator: $$\hat{\beta}^{ridge}(\lambda)=((1+\lambda)I)^{-1}X^Ty$$
+Now we look at the MSE, which we can get by the formula:
+$$\mathbb{E}[(\hat{\beta}-\beta)^T(\hat{\beta}-\beta)]$$
+Therefore we get:
+$$MSE_{OLS}=\mathbb{E}[(X^Ty-\beta)^T(X^Ty-\beta)]$$
+$$MSE_{ridge}=\mathbb{E}[(((1+\lambda)I)^{-1}X^Ty-\beta)^T(((1+\lambda)I)^{-1}X^Ty-\beta)]$$
+Now for $\lambda=0$ we get that $MSE_{OLS}=MSE_{ridge}$ and otherwise it is always possible to find a $\lambda$, so that we can scale $X^Ty$ to make the MSE of the ridge estimator smaller, as the $MSE_{OLS}$ gets bigger, if $X^Ty-\beta$ gets bigger.
+
 ## Task 5
 
 The $k$-nearest-neighbour representation is defined as:
