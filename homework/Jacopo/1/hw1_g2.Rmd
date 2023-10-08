@@ -2,7 +2,8 @@
 title: "Assignment 1"
 author: "Group 2"
 date: "`r Sys.Date()`"
-output: pdf_document
+output: 
+  pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -11,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Task 1
 
-Consider a balanced regression problem where for each input $x_i, \; i = 1,...,N$, one has J repeated outputs $y{_ij}, \; j = 1,...,J$ and one fits a parameterized model $f_{\theta}\(x\)$ by least squares.
+Consider a balanced regression problem where for each input $x_i, i = 1,...,N$, one has J repeated outputs $y{_ij}, j = 1,...,J$ and one fits a parameterized model $f_{\theta}(x)$ by least squares.
 
 * Show that the fit can be obtained from a least squares problem involving only xi and the average values $\overline{y_i} =\frac{1}{J} \sum_{j = 1}^{J} y_{ij}$
 
@@ -19,31 +20,29 @@ The problem basically says that we have $N$ groups, and for each we have $J$ rea
 
 The least squares problem is the following:
 
+$$
 \begin{aligned}
-
-RSS \; = \; sum_k^K  \(y_k - f_{\theta}(x) \)^2 = \\
-
-sum_k^K  \(y_k - \overline{y_k} + \overline{y_k} - f_{\theta}(x) \)^2 = \\
-
-sum_k^K  \(y_k - \overline{y_k} \)^2 \; + \; 2 \; sum_k^K \(y_k - \overline{y_k} \) \(\overline{y_k} - f_{\theta}(x) \) \;
-+ \; sum_k^K \(\overline{y_k} - f_{\theta}(x) \)^2 \\
-
-sum_k^K  \(y_k - \overline{y_k} \)^2  \; + \; 2 \; sum_i^N \(\overline{y_i} - f_{\theta}(x_i) \) sum_j^J \(y_j - \overline{y_i} \) \; + \; sum_i^N sum_j^J \(\overline{y_i} - f_{\theta}(x_i) \)^2 \\
-
+&RSS  = \sum_k^K  (y_k - f_{\theta}(x) )^2 =\\
+& \sum_k^K  (y_k - \overline{y_k} + \overline{y_k} - f_{\theta}(x) )^2 =\\
+& \sum_k^K  (y_k - \overline{y_k})^2 + 2 \sum_k^K (y_k - \overline{y_k}) (\overline{y_k} - f_{\theta}(x)) +  \sum_k^K (\overline{y_k} - f_{\theta}(x) )^2\\
+& \sum_k^K  (y_k - \overline{y_k} )^2 + 2 \sum_i^N (\overline{y_i} - f_{\theta}(x_i) ) \sum_j^J(y_j - \overline{y_i}) + \sum_i^N \sum_j^J (\overline{y_i} - f_{\theta}(x_i) )^2
 \end{aligned}
+$$
 
-Now we make two observations. The first is that in the first term we obtain a constant which does not depend on $\theta$. Secondly, the term $sum_j^J \(y_j - \overline{y_i} \)$ equals 0, since they are distances from the mean. Hence, we remain with the last term,
+Now we make two observations. The first is that in the first term we obtain a constant which does not depend on $\theta$. Secondly, the term $\sum_j^J (y_j - \overline{y_i})$ equals 0, since they are distances from the mean. Hence, we remain with the last term,
 which is precisely what we want to show.
 
 * Explain how the least squares problem changes if the design is not balanced, i.e., one has different number of repetitions for each input $x_i$
 
 If we add the point that we have different number of observations for each group, then we have that:
+$$
+RSS = \sum_i^N w_i (\overline{y_i} - f_{\theta}(x_i) )^2
+$$
 
-\begin{aligned}
-RSS \; = \; sum_i^N w_i \; (\overline{y_i} - f_{\theta}(x_i) \)^2
-\end{aligned}
+
 
 where $w_i$ is the number of observations for each group $i$.
+
 ## Task 2
 
 ## Task 3
