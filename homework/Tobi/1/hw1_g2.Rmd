@@ -13,6 +13,99 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Task 2
 
+Consider a set of training data $\left(\boldsymbol{x}_1, y_1\right), \ldots, \left(\boldsymbol{x}_N, y_N\right)$ drawn at random from a population and some test data $\left(\tilde{\boldsymbol{x}}_1, \tilde{y}_1\right), \ldots, \left(\tilde{\boldsymbol{x}}_M, \tilde{y}_M\right)$ also drawn at random from the same population as the training data are given.
+
+We want to show that: 
+\[
+\mathrm{E}\left[R_{t r}(\hat{\beta})\right] \leq \mathrm{E}\left[R_{t r}(\mathrm{E} \hat{\beta})\right]=\mathrm{E}\left[R_{t e}(\mathrm{E} \hat{\beta})\right] \leq \mathrm{E}\left[R_{t e}(\hat{\beta})\right]
+\]
+where $R_{tr}(\hat{beta})=\frac{1}{N} \sum_{i=1}^N\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2$ and $R_{tr}(\hat{beta})=\frac{1}{M} \sum_{i=1}^M\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2$
+
+\textbf{Solution:}
+
+
+1. \textbf{Proving the left inequality:}
+
+   Starting with the definition of $\hat{\beta}$ obtained from the training data:
+
+   \[
+   \hat{\beta} = \arg \min_{\beta'} \frac{1}{N} \sum_{i=1}^N\left(y_i-\boldsymbol{x}_i^{\top} \beta'\right)^2
+   \]
+
+   Since $\hat{\beta}$ minimizes the training error, we have:
+
+   \[
+   R_{tr}(\hat{\beta}) \leq R_{tr}(\beta)
+   \]
+
+   Now, taking the expectation of both sides:
+
+   \[
+   \mathrm{E}\left[R_{tr}(\hat{\beta})\right] \leq \mathrm{E}\left[R_{tr}(\beta)\right]
+   \]
+
+   The random variable $\hat{\beta}$ depends on the training data, but we can take its expectation, resulting in a fixed, non-random vector $\mathrm{E}(\hat{\beta})$. Substituting this into the above inequality:
+
+   \[
+   \mathrm{E}\left[R_{tr}(\hat{\beta})\right] \leq \mathrm{E}\left[R_{tr}(\mathrm{E}(\hat{\beta}))\right]
+   \]
+
+   This proves the left inequality.
+   
+
+2. \textbf{Proving the middle equality:}
+
+   For any fixed vector $\beta$, the expected training error $\mathrm{E}[R_{tr}(\beta)]$ and the expected test error $\mathrm{E}[R_{te}(\beta)]$ are given by:
+
+   \[
+   \mathrm{E}[R_{tr}(\beta)] = \frac{1}{N} \sum_{i=1}^N \mathrm{E}\left[(y_i-\boldsymbol{x}_i^{\top} \beta)^2\right] = \mathrm{E}\left[(Y-\boldsymbol{X}^{\top} \beta)^2\right]
+   \]
+
+   \[
+   \mathrm{E}[R_{te}(\beta)] = \frac{1}{M} \sum_{i=1}^M \mathrm{E}\left[(\tilde{y}_i-\tilde{\boldsymbol{x}}_i^{\top} \beta)^2\right] = \mathrm{E}\left[(\tilde{Y}-\tilde{\boldsymbol{X}}^{\top} \beta)^2\right]
+   \]
+
+   This equality holds because both the training and test data come from the same distribution.
+
+3. \textbf{Proving the right inequality:}
+
+   We treat $\hat{\beta}$ as a random vector independent from the test data due to the independence between the training and test data. For this part, we can forget about the training data and think of $\hat{\beta}$ as a random vector independent of the (test) data.
+
+   Starting with the expected test error:
+
+   \[
+   \begin{align*}
+   \mathrm{E}[R_{te}(\hat{\beta})] &= \mathrm{E}\left(\tilde{Y}-\tilde{\boldsymbol{X}}^{\top} \hat{\beta}\right)^2 \\
+   &= \mathrm{E}\left(\tilde{Y}^2-2 \tilde{Y} \tilde{\boldsymbol{X}}^{\top} \hat{\beta}+\left( \tilde{\boldsymbol{X}}^{\top}\hat{\beta}\right)^2\right) \\
+   &= \tilde{Y}^2-2 \tilde{Y}\tilde{\boldsymbol{X}}^{\top} \mathrm{E}\left(\hat{\beta}\right) +\tilde{\boldsymbol{X}}^{\top}\mathrm{E}\left(\hat{\beta}\hat{\beta}^{\top}\right) \tilde{\boldsymbol{X}} \\
+   &= \tilde{Y}^2-2 \tilde{Y}\tilde{\boldsymbol{X}}^{\top} \mathrm{E}\left(\hat{\beta}\right) +\tilde{\boldsymbol{X}}^{\top}\left[\mathrm{E}\left(\hat{\beta}\right)\mathrm{E}\left(\hat{\beta}^{\top}\right)+Cov\left(\hat{\beta}\right)\right] \tilde{\boldsymbol{X}}
+   \end{align*}
+   \]
+
+   Since the covariance matrix is positive semi-definite, $X^T \operatorname{Cov}(\beta) X \geq 0$, we have:
+   
+\[
+\begin{align*}
+\mathrm{E}[R_{te}(\hat{\beta})] &\geq \tilde{Y}^2-2 \tilde{Y} \tilde{\boldsymbol{X}}^{\top}\mathrm{E}(\hat{\beta})+\tilde{\boldsymbol{X}}^{\top}\mathrm{E}(\hat{\beta})\mathrm{E}(\hat{\beta}^{\top}) \tilde{\boldsymbol{X}} \\
+&\geq \left(\tilde{Y}-\tilde{\boldsymbol{X}}^{\top}\mathrm{E}(\hat{\beta})\right)^2
+\end{align*}
+\]
+
+   This implies:
+
+   \[
+   \mathrm{E}[R_{te}(\hat{\beta})] \geq \mathrm{E}\left(\tilde{Y}- \tilde{\boldsymbol{X}}^{\top}\mathrm{E}\left(\hat{\beta}\right)\right)^2 = \mathrm{E}\left(R_{te}(\mathrm{E}\left(\hat{\beta}\right))\right)
+   \]
+
+   Thus, we've proved the right inequality.
+
+Therefore, we have established that:
+
+\[
+\mathrm{E}\left[\frac{1}{N} \sum_{i=1}^N\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2\right] \leq \mathrm{E}\left[\frac{1}{M} \sum_{i=1}^M\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2\right]
+\]
+
+
 ## Task 3
 
 ## Task 4
