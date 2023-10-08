@@ -25,7 +25,7 @@ $$
 &RSS  = \sum_k^K  (y_k - f_{\theta}(x) )^2 =\\
 & \sum_k^K  (y_k - \overline{y_k} + \overline{y_k} - f_{\theta}(x) )^2 =\\
 & \sum_k^K  (y_k - \overline{y_k})^2 + 2 \sum_k^K (y_k - \overline{y_k}) (\overline{y_k} - f_{\theta}(x)) +  \sum_k^K (\overline{y_k} - f_{\theta}(x) )^2\\
-& \sum_k^K  (y_k - \overline{y_k} )^2 + 2 \sum_i^N (\overline{y_i} - f_{\theta}(x_i) ) \sum_j^J(y_j - \overline{y_i}) + \sum_i^N \sum_j^J (\overline{y_i} - f_{\theta}(x_i) )^2
+& \sum_k^K  (y_k - \overline{y_k} )^2 + 2 \sum_i^N (\overline{y_i} - f_{\theta}(x_i) ) \sum_j^J(y_j - \overline{y_k}) + \sum_i^N \sum_j^J (\overline{y_i} - f_{\theta}(x_i) )^2
 \end{aligned}
 $$
 
