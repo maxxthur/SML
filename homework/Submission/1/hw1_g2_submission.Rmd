@@ -1,0 +1,246 @@
+---
+title: "Assignment 1"
+author: "Group 2"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Task 1
+
+## Task 2
+
+## Task 3
+
+## Task 4
+
+## Task 5
+
+## Task 6
+
+First we write functions to perform the steps of the precodure. 
+
+```{r, message=FALSE}
+library(caret) # we get knnreg from here
+
+# function to get y and X
+get_xy <- function(p, sigma, N = 500) {
+  X <- sapply(1:p, function(x) runif(n = N, min = -1, max = 1))
+  epsilon <- rnorm(n = N, sd = sigma)
+  Y <- exp(-8 * apply(X^2, MARGIN = 1, FUN = sum)) + epsilon 
+  df <- data.frame(Y = Y, X = X)
+  return(df)
+}
+
+# function to get predictions at x0 = 0 for every f hat
+get_fx0 <- function(x0 = 0, sigma, data) {
+  x0_df <- as.data.frame(matrix(rep(x0, ncol(data)-1), nrow = 1))
+  names(x0_df) <- names(data)[-1]
+  f <- as.formula(paste0(names(data)[1], "~", paste(names(data)[-1], collapse = "+")))
+  # estimate linear model
+  l <- lm(data = data, formula = f)
+  l_x0 <- predict.lm(l, newdata = x0_df) # its just the intercept what was clear
+                                         # but if we specify other x0 the function
+                                         # still works
+  # estimate knn
+  knn_mod <- knnreg(formula = f, data = data, k = 1)
+  knn_x0 <- predict(knn_mod, newdata = x0_df)
+  
+  # output the fx0 value
+  data.frame(linear = l_x0, knn = as.numeric(knn_x0))
+}
+ 
+  # function to calculate EPE
+ epe <- function(fx0, x_0 = 0, p, mu = 0, sigma, f = function(x) exp(-8 * sum(x^2))) {
+   x_0 <- rep(x_0, p)
+   noise <- rnorm(n = nrow(fx0), mean = mu, sd = sigma)
+   epe_lm <- mean((f(x_0) + noise  - fx0$linear)^2)
+   epe_knn <- mean((f(x_0) + noise - fx0$knn)^2)
+   return(data.frame(epe_linear = epe_lm, epe_knn = epe_knn))
+}
+```
+
+Now that we have the functions we can iterate over $p$ and $\sigma$ and estimate in each of the 1000 iterations a linear model as well as a $KNN(1)$. 
+
+```{r}
+run <- F # only change if you want to do the simulation again
+
+if(run == T) {
+# get all combinations of p and sigma
+grid <- expand.grid(p = 1:10, sigma = 0:1)
+
+grid_split <- with(grid, split(x = grid, f = list(p, sigma)))
+
+# create 1000 datasets per p-sigma combination
+
+results <- lapply(grid_split, function(g) {
+  # generate specific data sets
+  spec <- vector(mode = "list", length = 1000)
+  for(m in 1:1000) {
+    spec[[m]] <- get_xy(p = g$p, sigma = g$sigma)
+  }
+  
+  # evaluate f hat at x_0 = 0
+  fx0 <- do.call("rbind", lapply(spec, function(s) get_fx0(data = s, sigma = g$sigma)))
+  
+  epe_run <- epe(fx0 = fx0, x_0 = 0, p = g$p, mu = 0, sigma = g$sigma)
+  
+  data.frame(p = g$p, sigma = g$sigma, epe_run)
+})
+
+
+results_bind <- do.call("rbind", results)
+
+saveRDS(results_bind, file = "results_task6.rds")
+}
+
+
+```
+
+We can now inspect the results of the simulation. 
+
+```{r}
+# make a nice plot
+library(ggplot2)
+library(tidyr)
+library(ggthemes)
+library(latex2exp)
+
+# load the saved results
+results_bind <- readRDS(file = "results_task6.rds")
+
+results_bind |>
+  pivot_longer(cols = contains("epe")) |>
+  ggplot(aes(x = p, y = value, color = as.factor(sigma), group = as.factor(sigma))) +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = 1:10) +
+  facet_wrap(~ name, nrow = 2) +
+  labs(y = "EPE", color = TeX("$\\sigma$")) +
+  theme_base()
+  
+
+```
+There are two observations here. First, dimensionality increases EPE for both methods. However the linear model experiences the increase earlier but then further increases become smaller while for KNN the increases are smaller but last longer with increasing $p$. Second, an increase in $\sigma$ shifts up EPE almost by its magnitude. This illustrates the irreducible error that is introduced by the noise term which is usually part of the models we think of when describing data generating processes. 
+
+## Task 7
+
+
+```{r}
+# load data
+data("diabetes", package = "lars")
+
+# matrices can apparently be columns in df..
+# good to know
+y <- rnorm(100)
+x1 = rnorm(100)
+x2 = rnorm(100)
+x <- cbind(x1, x2)
+df <- data.frame(y = y, x = I(x))
+
+# but this complicates things so we break up the
+# structure and make a nice df
+# function to get rid of Asis
+unAsIs <- function(X) {
+    if("AsIs" %in% class(X)) {
+        class(X) <- class(X)[-match("AsIs", class(X))]
+    }
+    X
+}
+
+# extract y and x
+y <- diabetes$y
+x <- unAsIs(diabetes$x)
+
+# make a new df with all the data
+diabetes_df <- as.data.frame(cbind(y, x))
+
+```
+As instructed, we now set a seed and sample row indices from the set of integers running from 1 to the number of observations with equal probability.
+
+```{r}
+# set seed
+set.seed(12)
+
+# split the data into train and test
+# step 1: sample 400 indices
+ind <- sample(x = 1:nrow(diabetes_df), size = 400)
+
+# subset the datasets as instructed
+train <- diabetes_df[ind, ]
+test <- diabetes_df[-ind, ]
+```
+
+The reason why random sampling is a good idea is that we are not really familiar with the dataset. Specifically we do not know whether observations were sorted by any of the variables available and if so we do not know at all by which one. Just taking the 400 first observations then would lead the information contained in training and test data to be biased by sorting leading ultimately to sampling bias in our estimations.
+
+With respect to the question about standardized data lets start what happens if we use unstandardized data to be able to highlight why it is sensible to use standardized data instead in the subsequent analysis. Lets say we have a regression of the form $y = X\beta + \epsilon$. If X contains unstandardized data, the unit of measurement is likely to be different between variables, for instance age is measured in years but height is measured in cm. As regression coefficients can be interpreted ceteris paribus as the change of $y$ wrt to a change in $X_i$ but dependent on the unit of measurement. Thus it is not possible to disentangle the strength of the effects based on unstandardized regression coefficients. This is especially a problem if we want to perform variable selection, as we want to select those variables with the greatest influence on the response variable. But as we cannot really measure how large the influence (read: effect) of the variable is based on unstandardized regression, we cannot perform variable selection like this in a sensible way. 
+
+Standardized regression coefficients however represent the change $y$ in terms of standard deviations for a one-standard-deviation change in the corresponding standardized $X_i$. They allow for direct comparison of the relative importance of different variables and help assess the impact of predictors while accounting for differences in scale and units. Thus standardization solves the problem caused by differences in units of measurement. This ultimately allows sensible variable selection.
+
+To analyse the correlation structures we simply calculate a matrix with correlation of all columns in our dataset. The first column contains the correlations of the variables in $X$ with $y$ and the other columns and rows respectively contain the correlations between the columns in $X$. In general high absolute values of $corr(X_k, y)$ are desirable because this implies high co- or countermovement of the dependent and independent variables. This at least hints at predictive power of $X_k$, where $k$ is the column index. Contrary, low values for $corr(X_k, X_j)$, $k \neq j$ are desirable as high values would introduce all the problems associated with multicollinearity, most prominently however the variance of the estimates will become inflated. This means nothing else than a loss in precision of estimates. Another huge problem is that multicollinearity is associated with "almost rank deficient" $X'X$ what can lead to problems if we run our model on a computer system.
+
+```{r}
+library(kableExtra)
+# exploration of correlation
+correlation_matrix <- round(cor(train), 2)
+# eliminate redundancies and make a nice table for the pdf
+correlation_matrix[!lower.tri(correlation_matrix)] <- ""
+kable(correlation_matrix, booktabs = T, caption = "Correlation matrix for y and X")
+```
+
+Looking at Table 1 we can clearly identify variables that seem to have explanatory power w.r.t. $y$, namely *bmi*, *ltg*, *map*, *tch*, *hdl* and *glue*. Looking at the correlation structure of this subset of the columns in $X$ we find that especially those variables exhibit substantial correlation among themselves. In the light of variable selection this causes the familiar problems of multicollinearity and specifically in terms of model selection the problem is, that the effect captured by a regression model with respect to a certain variable depends heavily on the inclusion of variables that are highly correlated with this particular variable. This can destabilize variable selection procedures. 
+
+```{r}
+# use training data to fit the full model
+# get model formula from column names
+f <- as.formula(paste0("y~", paste(colnames(train)[-1], collapse = "+")))
+
+fit_full <- lm(data = train, formula = f)
+
+# get variables significant at alpha = 0.05
+summary_full <- summary(fit_full)
+coefficients <- summary_full$coefficients
+significant <- which(coefficients[, 4] < 0.05)[-1]
+
+# in sample MSE
+MSE_full_in <- mean(fit_full$residuals^2)
+
+# out of sample MSE
+pred_full <- predict(fit_full, newdata = test)
+MSE_full_out <- mean((test$y - pred_full)^2)
+
+message(paste("In sample MSE is", MSE_full_in, sep = ": "))
+message(paste("Out of sample MSE is", MSE_full_out, sep = ": "))
+```
+
+```{r}
+# use the significant variables only
+f2 <- as.formula(paste0("y~", paste(colnames(train)[significant], collapse = "+")))
+
+# estimate smaller model
+fit_sig <- lm(data = train, formula = f2)
+
+# in sample MSE
+MSE_sig_in <- mean(fit_sig$residuals^2)
+
+# out of sample MSE
+pred_sig <- predict(fit_sig, newdata = test)
+MSE_sig_out <- mean((test$y - pred_sig)^2)
+
+message(paste("In sample MSE is", MSE_sig_in, sep = ": "))
+message(paste("Out of sample MSE is", MSE_sig_out, sep = ": "))
+
+# F-Test
+anova(fit_sig, fit_full)
+```
+We find that the additional variables in the full model yield a statistically significant improvement over the model with just the variables being statistically significant. 
+
+## Task 8
+
+## Task 9
+
+## Task 10
+

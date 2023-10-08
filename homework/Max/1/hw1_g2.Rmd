@@ -21,11 +21,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Task 6
 
-First we write a function to construct $Y$ and another to calculate $EPE$ as given in the task.
+First we write functions to perform the steps of the precodure. 
 
-```{r}
-library(caret)
+```{r, message=FALSE}
+library(caret) # we get knnreg from here
 
+# function to get y and X
 get_xy <- function(p, sigma, N = 500) {
   X <- sapply(1:p, function(x) runif(n = N, min = -1, max = 1))
   epsilon <- rnorm(n = N, sd = sigma)
@@ -34,6 +35,7 @@ get_xy <- function(p, sigma, N = 500) {
   return(df)
 }
 
+# function to get predictions at x0 = 0 for every f hat
 get_fx0 <- function(x0 = 0, sigma, data) {
   x0_df <- as.data.frame(matrix(rep(x0, ncol(data)-1), nrow = 1))
   names(x0_df) <- names(data)[-1]
@@ -51,6 +53,7 @@ get_fx0 <- function(x0 = 0, sigma, data) {
   data.frame(linear = l_x0, knn = as.numeric(knn_x0))
 }
  
+  # function to calculate EPE
  epe <- function(fx0, x_0 = 0, p, mu = 0, sigma, f = function(x) exp(-8 * sum(x^2))) {
    x_0 <- rep(x_0, p)
    noise <- rnorm(n = nrow(fx0), mean = mu, sd = sigma)
@@ -60,9 +63,12 @@ get_fx0 <- function(x0 = 0, sigma, data) {
 }
 ```
 
-Now that we have the function we can iterate over $p$ and $\sigma$ and estimate in each of the 1000 iterations a linear model as well as a a $KNN(1)$. 
+Now that we have the functions we can iterate over $p$ and $\sigma$ and estimate in each of the 1000 iterations a linear model as well as a $KNN(1)$. 
 
 ```{r}
+run <- F # only change if you want to do the simulation again
+
+if(run == T) {
 # get all combinations of p and sigma
 grid <- expand.grid(p = 1:10, sigma = 0:1)
 
@@ -85,9 +91,13 @@ results <- lapply(grid_split, function(g) {
   data.frame(p = g$p, sigma = g$sigma, epe_run)
 })
 
+
 results_bind <- do.call("rbind", results)
 
 saveRDS(results_bind, file = "results_task6.rds")
+}
+
+
 ```
 
 We can now inspect the results of the simulation. 
@@ -98,6 +108,9 @@ library(ggplot2)
 library(tidyr)
 library(ggthemes)
 library(latex2exp)
+
+# load the saved results
+results_bind <- readRDS(file = "results_task6.rds")
 
 results_bind |>
   pivot_longer(cols = contains("epe")) |>
@@ -124,11 +137,11 @@ data("diabetes", package = "lars")
 y <- rnorm(100)
 x1 = rnorm(100)
 x2 = rnorm(100)
-x <- cbind(x1, x2) 
+x <- cbind(x1, x2)
 df <- data.frame(y = y, x = I(x))
 
-# but this complicates things so we break up the 
-# structure and make a nice df 
+# but this complicates things so we break up the
+# structure and make a nice df
 # function to get rid of Asis
 unAsIs <- function(X) {
     if("AsIs" %in% class(X)) {
@@ -145,7 +158,7 @@ x <- unAsIs(diabetes$x)
 diabetes_df <- as.data.frame(cbind(y, x))
 
 ```
-As instructed, we now set a seed and sample row indices from the set of integers running from 1 to the number of observations with equal probability. 
+As instructed, we now set a seed and sample row indices from the set of integers running from 1 to the number of observations with equal probability.
 
 ```{r}
 # set seed
@@ -160,11 +173,13 @@ train <- diabetes_df[ind, ]
 test <- diabetes_df[-ind, ]
 ```
 
-The reason why random sampling is a good idea is that we are not really familiar with the dataset. Specifically we do not know whether observations were sorted by any of the variables available and if so we do not know at all by which one. Just taking the 400 first observations then would lead the information contained in training and test data to be biased by sorting leading ultimately to sampling bias in our estimations. 
+The reason why random sampling is a good idea is that we are not really familiar with the dataset. Specifically we do not know whether observations were sorted by any of the variables available and if so we do not know at all by which one. Just taking the 400 first observations then would lead the information contained in training and test data to be biased by sorting leading ultimately to sampling bias in our estimations.
 
-INSERT EXPLANATION ABOUT STANDARDIZED VARIABLES HERE.
+With respect to the question about standardized data lets start what happens if we use unstandardized data to be able to highlight why it is sensible to use standardized data instead in the subsequent analysis. Lets say we have a regression of the form $y = X\beta + \epsilon$. If X contains unstandardized data, the unit of measurement is likely to be different between variables, for instance age is measured in years but height is measured in cm. As regression coefficients can be interpreted ceteris paribus as the change of $y$ wrt to a change in $X_i$ but dependent on the unit of measurement. Thus it is not possible to disentangle the strength of the effects based on unstandardized regression coefficients. This is especially a problem if we want to perform variable selection, as we want to select those variables with the greatest influence on the response variable. But as we cannot really measure how large the influence (read: effect) of the variable is based on unstandardized regression, we cannot perform variable selection like this in a sensible way. 
 
-To analyse the correlation structures we simply calculate a matrix with correlation of all columns in our dataset. The first column contains the correlations of the variables in $X$ with $y$ and the other columns and rows respectively contain the correlations between the columns in $X$. In general high absolute values of $corr(X_k, y)$ are desirable because this implies high co- or countermovement of the dependent and independent variables. This at least hints at predictive power of $X_k$, where $k$ is the column index. Contrary, low values for $corr(X_k, X_j)$, $k \neq j$ are desirable as high values would introduce all the problems associated with multicollinearity, most prominently however the variance of the estimates will become inflated. This means nothing else than a loss in precision of estimates. Another huge problem is that multicollinearity is associated with "almost rank deficient" $X'X$ what can lead to problems if we run our model on a computer system. 
+Standardized regression coefficients however represent the change $y$ in terms of standard deviations for a one-standard-deviation change in the corresponding standardized $X_i$. They allow for direct comparison of the relative importance of different variables and help assess the impact of predictors while accounting for differences in scale and units. Thus standardization solves the problem caused by differences in units of measurement. This ultimately allows sensible variable selection.
+
+To analyse the correlation structures we simply calculate a matrix with correlation of all columns in our dataset. The first column contains the correlations of the variables in $X$ with $y$ and the other columns and rows respectively contain the correlations between the columns in $X$. In general high absolute values of $corr(X_k, y)$ are desirable because this implies high co- or countermovement of the dependent and independent variables. This at least hints at predictive power of $X_k$, where $k$ is the column index. Contrary, low values for $corr(X_k, X_j)$, $k \neq j$ are desirable as high values would introduce all the problems associated with multicollinearity, most prominently however the variance of the estimates will become inflated. This means nothing else than a loss in precision of estimates. Another huge problem is that multicollinearity is associated with "almost rank deficient" $X'X$ what can lead to problems if we run our model on a computer system.
 
 ```{r}
 library(kableExtra)
@@ -172,9 +187,10 @@ library(kableExtra)
 correlation_matrix <- round(cor(train), 2)
 # eliminate redundancies and make a nice table for the pdf
 correlation_matrix[!lower.tri(correlation_matrix)] <- ""
-kable(correlation_matrix, booktabs = T)
+kable(correlation_matrix, booktabs = T, caption = "Correlation matrix for y and X")
 ```
 
+Looking at Table 1 we can clearly identify variables that seem to have explanatory power w.r.t. $y$, namely *bmi*, *ltg*, *map*, *tch*, *hdl* and *glue*. Looking at the correlation structure of this subset of the columns in $X$ we find that especially those variables exhibit substantial correlation among themselves. In the light of variable selection this causes the familiar problems of multicollinearity and specifically in terms of model selection the problem is, that the effect captured by a regression model with respect to a certain variable depends heavily on the inclusion of variables that are highly correlated with this particular variable. This can destabilize variable selection procedures. 
 
 ```{r}
 # use training data to fit the full model
@@ -200,7 +216,7 @@ message(paste("Out of sample MSE is", MSE_full_out, sep = ": "))
 ```
 
 ```{r}
-# use the significant variables only 
+# use the significant variables only
 f2 <- as.formula(paste0("y~", paste(colnames(train)[significant], collapse = "+")))
 
 # estimate smaller model
@@ -217,24 +233,24 @@ message(paste("In sample MSE is", MSE_sig_in, sep = ": "))
 message(paste("Out of sample MSE is", MSE_sig_out, sep = ": "))
 
 # F-Test
-anova(fit_full, fit_sig)
+anova(fit_sig, fit_full)
 ```
-
+We find that the additional variables in the full model yield a statistically significant improvement over the model with just the variables being statistically significant. 
 
 ## Task 8
 
-The Akaike criterion is in general given by 
+The Akaike criterion is in general given by
 
 $$
   AIC = 2K - ln(L)
 $$
-where $K$ is the number of regressors and $L$ is the likelihood of the model. Since $2K$ is a penalty term, AIC is to be minimized to find the most appropriate model. 
+where $K$ is the number of regressors and $L$ is the likelihood of the model. Since $2K$ is a penalty term, AIC is to be minimized to find the most appropriate model.
 
 ### Best Subset Selection
 
 Best subset selection is basically just getting all $2^P$ possible combinations of explanatory variables available to us and estimating the corresponding regression models. It would be conventient to use the leaps package for this task but there the AIC-criterion is not implemented but only SIC and BIC. So we have to construct the models ourselves, estimate them and calculate AIC.
 
-First we write a function that calculates all possible combinations of regressors and gives back the associated regression formulas. We will not use the leaps and bounds algorithm as the dataset is not to big. 
+First we write a function that calculates all possible combinations of regressors and gives back the associated regression formulas. We will not use the leaps and bounds algorithm as the dataset is not to big.
 
 ```{r}
 # write function to get formulas
@@ -242,7 +258,7 @@ bs_formulas <- function(x = train, dep = "y", intercept_only = T) {
   # extract variables names
   vars <- names(x)
   exps <- vars[vars != dep]
-  
+
   # get all combinations
  f <- lapply(1:length(exps), function(k) {
     # get combinations for given k
@@ -253,12 +269,12 @@ bs_formulas <- function(x = train, dep = "y", intercept_only = T) {
     })
     # make it a vector again
     unlist(formulas)
-    }) 
+    })
   # dissolve list again
   output <- unlist(f)
-  
+
   if(intercept_only == T) output <- c(as.formula(paste0(dep, "~ 1")), output)
-  
+
   return(output)
 }
 ```
@@ -285,26 +301,31 @@ AIC <- 2 * K - 2 * LL
 best_index <- which.min(AIC)
 
 # display it
-formulas[[best_index]]
+message(formulas[[best_index]])
 ```
+
 Now that we have identified the best model we can assess its in- and out-of-sample performance using MSE again.
 
 ```{r}
 # get in sample MSE
 MSE_BS_in <- mean(fits[[best_index]]$residuals^2)
+message(paste("Within sample MSE is for Best Subset Selection:", MSE_BS_in))
 
 # get out of sample MSE
 MSE_BS_out <- mean((test$y - predict(fits[[best_index]], newdata = test))^2)
+message(paste("Out of sample MSE is for Best Subset Selection:", MSE_BS_out))
 ```
+
 Finally we conduct an F-Test of the identified model against the full model.
 
 ```{r}
 anova(fits[[best_index]], fits[[length(fits)]]) # last model is the full one by construction
 ```
+Based on the p-value of the F-Test we can conclude that adding the remaining variables to the model selected by best subset selection does not lead to a statically significant improvement. 
 
 ### Backward Stepwise
 
-Here we are lucky because the MASS package provides us with a function that does stepwise regression based on AIC. 
+Here we are lucky because the MASS package provides us with a function that does stepwise regression based on AIC.
 
 ```{r}
 library(MASS)
@@ -317,322 +338,335 @@ length(fit_full$coefficients)
 
 # get in sample MSE
 MSE_backwards_in <- mean(backwards_step$residuals^2)
+message(paste("Within sample MSE is for Backwards Stepwise:", MSE_backwards_in))
 
 # get out of sample MSE
 
 MSE_backwards_out <- mean((test$y - predict(backwards_step, newdata = test))^2)
+message(paste("Out of sample MSE is for Backwards Stepwise:", MSE_backwards_out))
 
-anova(fit_full, backwards_step)
+anova(backwards_step, fit_full)
 ```
+The result of the F-Test is the same as for best subset selection as the chosen model is the same again. The interpretation thus is the same as for best subset selection.
 
-
-## Task 9
-
-First we load the data. 
+Finally all results can be found in Table 2. 
 
 ```{r}
-data("Wage", package = "ISLR")
-```
+# prepare the 
+df_table <- data.frame()
 
-It is already in a nice data.frame such that we can directly dive into modeling. We first remove logwage and add the square of age to the data. Then we search for problematic columns by looking for constant variables, i.e. variables which have always the same value. If we find such a variable it is also deleted from the data.frame as it will cause problems when using lm().
-
-```{r}
-# exclude logwage 
-Wage$logwage <- NULL
-
-# add squared age to the data set 
-Wage$age_sq <- Wage$age^2
-
-# count distinct values for each variable 
-count_uniq <- lapply(Wage, function(var) length(unique(var)))
-
-# kick if there is a constant and print a message to know which one were  kicked
-for(i in 1:length(count_uniq)) {
-  if(count_uniq[[i]] == 1) {
-    Wage[, names(count_uniq)[i]] <- NULL
-    message(names(count_uniq)[i], " was kicked because it is a constant.")
-  }
-}
-```
-
-Then we estimate the full model with the Wage data.frame. We use Helmert-contrasts as we then can set $< HS \ Grad$ as the baseline and can interpret coefficients then successively in the order $< HS \ Grad < HS \ Grad < Some \ College < College \ Grad < Advanced \ Degree$ in the sense what the difference between the outcome of interest and the one below in the ranking is.
-
-```{r, results="asis"}
-# set dependent
-dep <- "wage"
-
-# set independents
-indep <- names(Wage)[names(Wage) != dep]
-
-# get model formula as string
-f_full <- paste0(dep, "~", paste(indep, collapse = "+"))
-
-# fit model with all desired explanatories
-fit_full <- lm(data = Wage, formula = f_full, contrasts = list(education = "contr.helmert"))
-
-# use stargazer for a nice regression table
-library(stargazer)
-stargazer(fit_full, type = "latex")
-```
-
-Now that we have the full model we can again use the function for best subset selection written for Task 8. We then use the AIC again to pick the best model 
-
-```{r}
-# get all formulas 
-wage_formulas <- bs_formulas(x = Wage, dep = "wage")
-
-# estimate all models
-fits_wage <- lapply(wage_formulas, function(f) lm(data = Wage, formula = f))
-
-# get log likelihoods
-LL_wage <- unlist(lapply(fits_wage, function(f) logLik(f)[1]))
-
-# get number of regressors (K)
-K_wage <- unlist(lapply(fits_wage, function(fit) length(fit$coefficients)))
-
-# get AIC
-AIC_wage <- 2 * K_wage - 2 * LL_wage
-
-# get the most appropriate model
-best_index_wage <- which.min(AIC_wage)
-
-# display it
-wage_formulas[[best_index_wage]]
-
-# display summary of the chosen model
-summary(lm(data = Wage, formula = wage_formulas[[best_index_wage]], contrasts = list(education = "contr.helmert")))
-```
-
-ADD INTERPRETATION HERE. 
-
-Finally, we check whether simply squaring the age variable to exploit diminishing returns of work experience yields different results from using orthogonal polynoms. We just amend the formula for the full model to achieve this. 
-
-```{r}
-f_full_orth <- sub(x = f_full, pattern = "age_sq", replacement = "poly(age, 2)")
-f_full_orth <- sub(x = f_full_orth, pattern = "age\\+", replacement = "")
-
-summary(lm(data = Wage, formula = f_full_orth))
-```
-
-We see that using orthogonal polynoms changes the coefficients of both age terms. This is due to the fact that $age^2$ is correlated with $age$. Orthogonal polynomials have on the other side have zero correlation due to the very fact that they are orthogonal to each other. This avoids multicollinearity between the two terms completely and therefore leads to more precise estimates.
-
-
-## Task 10
-
-```{r}
-# implementation of forwardstagewise
-forwardstagewise <- function(x, y, tol = sqrt(.Machine$double.eps)) {
-  
-  # checks 
-  check_dim <- length(y) == nrow(x)
-  check_num <- is.numeric(y) & is.numeric(x)
-  
-  if(check_dim == F) stop("Dimensions of x and y are not compatible.")
-  if(check_dim == F) stop("x or y is not a numeric vector (y) or numeric matrix (x).")
-   
-  # center x and y
-  y <- y - mean(y)
-  x <- sweep(x, 2, colMeans(x), '-')
-  
-  # make y a n x 1 matrix
-  y_m <- as.matrix(y)
-  
-  # init a coefficient vector b = 0
-  b <- matrix(rep(0, ncol(x)), byrow = T)
-  
-  # set the residuals to y initially
-  resid <- y_m
-  
-  # get absolute correlations between y and x as starting point
-  res_cor <- abs(cor(resid, x))
-  
-  # initialize empty output matrix
-  output <- matrix(b, ncol = nrow(b))
-
-  count_iter <- 1
-  repeat {
-    # print(count_iter)
-    # identify col index of variable with highest correlation
-    index_high <- which.max(res_cor)
-    
-    # regress residuals on chosen variable
-    b_add <- sum(x[, index_high] * resid) / sum(x[, index_high]^2)
-    
-    # add coefficient to b at the appropriate index
-    b[index_high, ] <- b[index_high,] + b_add
-    
-    output <- rbind(output, matrix(b, ncol = nrow(b))) 
-    
-    # update residuals
-    resid <- y_m - x %*% b 
-    
-    # update absolute residual correlations
-    res_cor <- abs(cor(resid, x))
-    
-    # now check whether we stop
-    if(max(res_cor) < tol) break
-    count_iter <- count_iter + 1
-  }
-  
-  # return output
-  return(output)
-}
+names(fit_full$coefficients)
 ```
 
 
-```{r}
-library(MASS)
-# Simulation: NEEDS TO BE DONE 50 times!
 
-# specify params of multivariate normal
-mu <- rep(0, 31) # as standard normal has mu = 0
-sigma <- diag(x = 1, nrow = 31) # sigma is 1 in standard normal
-sigma[!diag(x = T, nrow = 31)] <- 0.85 # add covariances to off diags
+<!-- ## Task 9 -->
 
-# draw 300 obs from multivariate normal
-{
-  set.seed(123) # ensure that we always get the same numbers
-x <- mvrnorm(n = 300, mu = mu, Sigma = sigma)
-colnames(x) <- 1:31 # name by col index
+<!-- First we load the data.  -->
 
-# sample column indices to select randomly which of the 31 variables 
-# define y
-col_ind <- sort(sample(1:31, size = 10))
+<!-- ```{r} -->
+<!-- data("Wage", package = "ISLR") -->
+<!-- ``` -->
 
-# draw coefficient from N(0, 0.4)
-random_coef <- rnorm(n = 10, mean = 0, sd = sqrt(0.4)) # assuming that you give the variance in the instructions
+<!-- It is already in a nice data.frame such that we can directly dive into modeling. We first remove logwage and add the square of age to the data. Then we search for problematic columns by looking for constant variables, i.e. variables which have always the same value. If we find such a variable it is also deleted from the data.frame as it will cause problems when using lm(). -->
 
-# get noise
-noise <- rnorm(300, mean = 0, sd = sqrt(6.25))
-}
+<!-- ```{r} -->
+<!-- # exclude logwage  -->
+<!-- Wage$logwage <- NULL -->
 
-# create empty matrix 
-coef_mat <- matrix(rep(NA, 10 * 300), ncol = 10)
+<!-- # add squared age to the data set  -->
+<!-- Wage$age_sq <- Wage$age^2 -->
 
-# fill columns with randomly drawn coefficients
-for(i in 1:length(random_coef)) coef_mat[, i] <- random_coef[i]
+<!-- # count distinct values for each variable  -->
+<!-- count_uniq <- lapply(Wage, function(var) length(unique(var))) -->
 
-# chose columns of x by drawn indices
-x_chosen <- x[, col_ind]
+<!-- # kick if there is a constant and print a message to know which one were  kicked -->
+<!-- for(i in 1:length(count_uniq)) { -->
+<!--   if(count_uniq[[i]] == 1) { -->
+<!--     Wage[, names(count_uniq)[i]] <- NULL -->
+<!--     message(names(count_uniq)[i], " was kicked because it is a constant.") -->
+<!--   } -->
+<!-- } -->
+<!-- ``` -->
 
-# get row sum of hadamard product of coefficient matrix and 
-# randomly selected columns from the mult. normal matrix
-y <- apply(coef_mat * x_chosen, MARGIN = 1, FUN = sum)
+<!-- Then we estimate the full model with the Wage data.frame. We use Helmert-contrasts as we then can set $< HS \ Grad$ as the baseline and can interpret coefficients then successively in the order $< HS \ Grad < HS \ Grad < Some \ College < College \ Grad < Advanced \ Degree$ in the sense what the difference between the outcome of interest and the one below in the ranking is. -->
 
-# add noise as instructed
-y_noise <- y + noise
+<!-- ```{r, results="asis"} -->
+<!-- # set dependent -->
+<!-- dep <- "wage" -->
 
-# test forwardstagewise
-test_fsw <- forwardstagewise(x = x, y = y_noise)
-test_fsw[ncol(test_fsw), ]
-```
+<!-- # set independents -->
+<!-- indep <- names(Wage)[names(Wage) != dep] -->
 
-```{r}
-library(leaps)
+<!-- # get model formula as string -->
+<!-- f_full <- paste0(dep, "~", paste(indep, collapse = "+")) -->
 
-# best subset selection with leaps
+<!-- # fit model with all desired explanatories -->
+<!-- fit_full <- lm(data = Wage, formula = f_full, contrasts = list(education = "contr.helmert")) -->
 
-# center variables
-y_c <- y_noise - mean(y_noise)
-x_c <- sweep(x, 2, colMeans(x), '-')
+<!-- # use stargazer for a nice regression table -->
+<!-- library(stargazer) -->
+<!-- stargazer(fit_full, type = "latex") -->
+<!-- ``` -->
 
-# perform best subset selection (maybe force out the intercept as it should be 0!)
-best_subset <- regsubsets(x = x_c, y = y_c, method = "exhaustive", nvmax = 31)
+<!-- Now that we have the full model we can again use the function for best subset selection written for Task 8. We then use the AIC again to pick the best model  -->
 
-# as we know the true process has 10 relevant variables we extract
-# the model that was best for 10 variables
+<!-- ```{r} -->
+<!-- # get all formulas  -->
+<!-- wage_formulas <- bs_formulas(x = Wage, dep = "wage") -->
 
-# get summary
-summary_bs <- summary(best_subset)
+<!-- # estimate all models -->
+<!-- fits_wage <- lapply(wage_formulas, function(f) lm(data = Wage, formula = f)) -->
 
-# extract the which matrix
-models_each_n <- summary_bs$which
-best_10 <- models_each_n[10, ] # maybe we have to choose here by other criterion?
+<!-- # get log likelihoods -->
+<!-- LL_wage <- unlist(lapply(fits_wage, function(f) logLik(f)[1])) -->
 
-# get included variables indices
-included_bs <- as.numeric(names(best_10[best_10 == T])[-1])
+<!-- # get number of regressors (K) -->
+<!-- K_wage <- unlist(lapply(fits_wage, function(fit) length(fit$coefficients))) -->
 
-# compare the result with the sampled col indices
-included_bs == col_ind # they are the same
+<!-- # get AIC -->
+<!-- AIC_wage <- 2 * K_wage - 2 * LL_wage -->
 
-coef(best_subset, 31)
+<!-- # get the most appropriate model -->
+<!-- best_index_wage <- which.min(AIC_wage) -->
 
-```
+<!-- # display it -->
+<!-- wage_formulas[[best_index_wage]] -->
 
-```{r, echo=FALSE}
-# specify params of multivariate normal
-mu <- rep(0, 31) # as standard normal has mu = 0
-sigma <- diag(x = 1, nrow = 31) # sigma is 1 in standard normal
-sigma[!diag(x = T, nrow = 31)] <- 0.85 # add covariances to off diags
+<!-- # display summary of the chosen model -->
+<!-- summary(lm(data = Wage, formula = wage_formulas[[best_index_wage]], contrasts = list(education = "contr.helmert"))) -->
+<!-- ``` -->
 
-# Conduct the simulation
-b_list <- vector(mode = "list", length = 50)
-for(i in 1:50) {
-  message(paste("Simulation Step:", i))
-  x <- mvrnorm(n = 300, mu = mu, Sigma = sigma)
-  colnames(x) <- 1:31 # name by col index
+<!-- ADD INTERPRETATION HERE.  -->
 
-  # sample column indices to select randomly which of the 31 variables   # define y
-  col_ind <- sort(sample(1:31, size = 10))
+<!-- Finally, we check whether simply squaring the age variable to exploit diminishing returns of work experience yields different results from using orthogonal polynoms. We just amend the formula for the full model to achieve this.  -->
 
-  # draw coefficient from N(0, 0.4)
-  random_coef <- rnorm(n = 10, mean = 0, sd = sqrt(0.4)) # assuming     that you give the variance in the instructions
-  
-  # make true coefficient vector
-  true_b <- matrix(rep(0, 31), ncol = 1)
-  true_b[col_ind,] <- random_coef
+<!-- ```{r} -->
+<!-- f_full_orth <- sub(x = f_full, pattern = "age_sq", replacement = "poly(age, 2)") -->
+<!-- f_full_orth <- sub(x = f_full_orth, pattern = "age\\+", replacement = "") -->
 
-  # get noise
-  noise <- rnorm(300, mean = 0, sd = sqrt(6.25))
-  
-  # get y 
-  y <- x %*% true_b + noise
-  
-  # center x and y 
-  x_c <- sweep(x, 2, colMeans(x), "-")
-  y_c <- y - mean(y)
-  
-  # calculate best subset 
-  best_subset <- regsubsets(x = x_c, y = y_c, nvmax = 31)
-  
-  # choose the best overall model via minimal BIC
-  best_model_bs <- which.min(summary(best_subset)$bic)
-  best_bs_coef <- coef(best_subset, best_model_bs)[-1] # remove intercept as 0 anyway
-  
-  # get the appropriate model according to forwardstagewise
-  evolution_fsw <- forwardstagewise(x = x, y = y)
-  model_fsw <- evolution_fsw[ncol(evolution_fsw), ]
-  
-  # make all coef objects vectors 
-  true_b_v <- true_b[, 1]
-  best_bs_v <- rep(0, 31)
-  best_bs_v[as.integer(names(best_bs_coef))] <- best_bs_coef
-  fsw_v <- model_fsw
-  
-  b_list[[i]] <- cbind(true_b_v, best_bs_v, fsw_v)
-}
+<!-- summary(lm(data = Wage, formula = f_full_orth)) -->
+<!-- ``` -->
 
-# calculate sum of squares for each iteration
-sum_squares_list <- lapply(b_list, function(b) {
-  best_bs <- sum((b[,1] - b[,2])^2)
-  fsw <- sum((b[,1] - b[,3])^2)
-  c(best_bs = best_bs, fsw = fsw)
-})
+<!-- We see that using orthogonal polynoms changes the coefficients of both age terms. This is due to the fact that $age^2$ is correlated with $age$. Orthogonal polynomials have on the other side have zero correlation due to the very fact that they are orthogonal to each other. This avoids multicollinearity between the two terms completely and therefore leads to more precise estimates. -->
 
-sum_squares <- as.data.frame(do.call("rbind", sum_squares_list))
 
-# calculate expectation
-expect <- apply(sum_squares, MARGIN = 2, mean)
-expect
+<!-- ## Task 10 -->
 
-# visualize sum of squares from simulation steps with histograms
-sum_squares |> 
-  pivot_longer(cols = everything()) |>
-  ggplot(aes(x = value, fill = name)) +
-  geom_vline(xintercept = expect[1], color = "red") +
-  geom_vline(xintercept = expect[2], color = "blue") +
-  geom_density(alpha = 0.5) +
-  theme_base()
-  
-```
+<!-- ```{r} -->
+<!-- # implementation of forwardstagewise -->
+<!-- forwardstagewise <- function(x, y, tol = sqrt(.Machine$double.eps)) { -->
+
+<!--   # checks  -->
+<!--   check_dim <- length(y) == nrow(x) -->
+<!--   check_num <- is.numeric(y) & is.numeric(x) -->
+
+<!--   if(check_dim == F) stop("Dimensions of x and y are not compatible.") -->
+<!--   if(check_dim == F) stop("x or y is not a numeric vector (y) or numeric matrix (x).") -->
+
+<!--   # center x and y -->
+<!--   y <- y - mean(y) -->
+<!--   x <- sweep(x, 2, colMeans(x), '-') -->
+
+<!--   # make y a n x 1 matrix -->
+<!--   y_m <- as.matrix(y) -->
+
+<!--   # init a coefficient vector b = 0 -->
+<!--   b <- matrix(rep(0, ncol(x)), byrow = T) -->
+
+<!--   # set the residuals to y initially -->
+<!--   resid <- y_m -->
+
+<!--   # get absolute correlations between y and x as starting point -->
+<!--   res_cor <- abs(cor(resid, x)) -->
+
+<!--   # initialize empty output matrix -->
+<!--   output <- matrix(b, ncol = nrow(b)) -->
+
+<!--   count_iter <- 1 -->
+<!--   repeat { -->
+<!--     # print(count_iter) -->
+<!--     # identify col index of variable with highest correlation -->
+<!--     index_high <- which.max(res_cor) -->
+
+<!--     # regress residuals on chosen variable -->
+<!--     b_add <- sum(x[, index_high] * resid) / sum(x[, index_high]^2) -->
+
+<!--     # add coefficient to b at the appropriate index -->
+<!--     b[index_high, ] <- b[index_high,] + b_add -->
+
+<!--     output <- rbind(output, matrix(b, ncol = nrow(b)))  -->
+
+<!--     # update residuals -->
+<!--     resid <- y_m - x %*% b  -->
+
+<!--     # update absolute residual correlations -->
+<!--     res_cor <- abs(cor(resid, x)) -->
+
+<!--     # now check whether we stop -->
+<!--     if(max(res_cor) < tol) break -->
+<!--     count_iter <- count_iter + 1 -->
+<!--   } -->
+
+<!--   # return output -->
+<!--   return(output) -->
+<!-- } -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- library(MASS) -->
+<!-- # Simulation: NEEDS TO BE DONE 50 times! -->
+
+<!-- # specify params of multivariate normal -->
+<!-- mu <- rep(0, 31) # as standard normal has mu = 0 -->
+<!-- sigma <- diag(x = 1, nrow = 31) # sigma is 1 in standard normal -->
+<!-- sigma[!diag(x = T, nrow = 31)] <- 0.85 # add covariances to off diags -->
+
+<!-- # draw 300 obs from multivariate normal -->
+<!-- { -->
+<!--   set.seed(123) # ensure that we always get the same numbers -->
+<!-- x <- mvrnorm(n = 300, mu = mu, Sigma = sigma) -->
+<!-- colnames(x) <- 1:31 # name by col index -->
+
+<!-- # sample column indices to select randomly which of the 31 variables  -->
+<!-- # define y -->
+<!-- col_ind <- sort(sample(1:31, size = 10)) -->
+
+<!-- # draw coefficient from N(0, 0.4) -->
+<!-- random_coef <- rnorm(n = 10, mean = 0, sd = sqrt(0.4)) # assuming that you give the variance in the instructions -->
+
+<!-- # get noise -->
+<!-- noise <- rnorm(300, mean = 0, sd = sqrt(6.25)) -->
+<!-- } -->
+
+<!-- # create empty matrix  -->
+<!-- coef_mat <- matrix(rep(NA, 10 * 300), ncol = 10) -->
+
+<!-- # fill columns with randomly drawn coefficients -->
+<!-- for(i in 1:length(random_coef)) coef_mat[, i] <- random_coef[i] -->
+
+<!-- # chose columns of x by drawn indices -->
+<!-- x_chosen <- x[, col_ind] -->
+
+<!-- # get row sum of hadamard product of coefficient matrix and  -->
+<!-- # randomly selected columns from the mult. normal matrix -->
+<!-- y <- apply(coef_mat * x_chosen, MARGIN = 1, FUN = sum) -->
+
+<!-- # add noise as instructed -->
+<!-- y_noise <- y + noise -->
+
+<!-- # test forwardstagewise -->
+<!-- test_fsw <- forwardstagewise(x = x, y = y_noise) -->
+<!-- test_fsw[ncol(test_fsw), ] -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- library(leaps) -->
+
+<!-- # best subset selection with leaps -->
+
+<!-- # center variables -->
+<!-- y_c <- y_noise - mean(y_noise) -->
+<!-- x_c <- sweep(x, 2, colMeans(x), '-') -->
+
+<!-- # perform best subset selection (maybe force out the intercept as it should be 0!) -->
+<!-- best_subset <- regsubsets(x = x_c, y = y_c, method = "exhaustive", nvmax = 31) -->
+
+<!-- # as we know the true process has 10 relevant variables we extract -->
+<!-- # the model that was best for 10 variables -->
+
+<!-- # get summary -->
+<!-- summary_bs <- summary(best_subset) -->
+
+<!-- # extract the which matrix -->
+<!-- models_each_n <- summary_bs$which -->
+<!-- best_10 <- models_each_n[10, ] # maybe we have to choose here by other criterion? -->
+
+<!-- # get included variables indices -->
+<!-- included_bs <- as.numeric(names(best_10[best_10 == T])[-1]) -->
+
+<!-- # compare the result with the sampled col indices -->
+<!-- included_bs == col_ind # they are the same -->
+
+<!-- coef(best_subset, 31) -->
+
+<!-- ``` -->
+
+<!-- ```{r, echo=FALSE} -->
+<!-- # specify params of multivariate normal -->
+<!-- mu <- rep(0, 31) # as standard normal has mu = 0 -->
+<!-- sigma <- diag(x = 1, nrow = 31) # sigma is 1 in standard normal -->
+<!-- sigma[!diag(x = T, nrow = 31)] <- 0.85 # add covariances to off diags -->
+
+<!-- # Conduct the simulation -->
+<!-- b_list <- vector(mode = "list", length = 50) -->
+<!-- for(i in 1:50) { -->
+<!--   message(paste("Simulation Step:", i)) -->
+<!--   x <- mvrnorm(n = 300, mu = mu, Sigma = sigma) -->
+<!--   colnames(x) <- 1:31 # name by col index -->
+
+<!--   # sample column indices to select randomly which of the 31 variables   # define y -->
+<!--   col_ind <- sort(sample(1:31, size = 10)) -->
+
+<!--   # draw coefficient from N(0, 0.4) -->
+<!--   random_coef <- rnorm(n = 10, mean = 0, sd = sqrt(0.4)) # assuming     that you give the variance in the instructions -->
+
+<!--   # make true coefficient vector -->
+<!--   true_b <- matrix(rep(0, 31), ncol = 1) -->
+<!--   true_b[col_ind,] <- random_coef -->
+
+<!--   # get noise -->
+<!--   noise <- rnorm(300, mean = 0, sd = sqrt(6.25)) -->
+
+<!--   # get y  -->
+<!--   y <- x %*% true_b + noise -->
+
+<!--   # center x and y  -->
+<!--   x_c <- sweep(x, 2, colMeans(x), "-") -->
+<!--   y_c <- y - mean(y) -->
+
+<!--   # calculate best subset  -->
+<!--   best_subset <- regsubsets(x = x_c, y = y_c, nvmax = 31) -->
+
+<!--   # choose the best overall model via minimal BIC -->
+<!--   best_model_bs <- which.min(summary(best_subset)$bic) -->
+<!--   best_bs_coef <- coef(best_subset, best_model_bs)[-1] # remove intercept as 0 anyway -->
+
+<!--   # get the appropriate model according to forwardstagewise -->
+<!--   evolution_fsw <- forwardstagewise(x = x, y = y) -->
+<!--   model_fsw <- evolution_fsw[ncol(evolution_fsw), ] -->
+
+<!--   # make all coef objects vectors  -->
+<!--   true_b_v <- true_b[, 1] -->
+<!--   best_bs_v <- rep(0, 31) -->
+<!--   best_bs_v[as.integer(names(best_bs_coef))] <- best_bs_coef -->
+<!--   fsw_v <- model_fsw -->
+
+<!--   b_list[[i]] <- cbind(true_b_v, best_bs_v, fsw_v) -->
+<!-- } -->
+
+<!-- # calculate sum of squares for each iteration -->
+<!-- sum_squares_list <- lapply(b_list, function(b) { -->
+<!--   best_bs <- sum((b[,1] - b[,2])^2) -->
+<!--   fsw <- sum((b[,1] - b[,3])^2) -->
+<!--   c(best_bs = best_bs, fsw = fsw) -->
+<!-- }) -->
+
+<!-- sum_squares <- as.data.frame(do.call("rbind", sum_squares_list)) -->
+
+<!-- # calculate expectation -->
+<!-- expect <- apply(sum_squares, MARGIN = 2, mean) -->
+<!-- expect -->
+
+<!-- # visualize sum of squares from simulation steps with histograms -->
+<!-- sum_squares |>  -->
+<!--   pivot_longer(cols = everything()) |> -->
+<!--   ggplot(aes(x = value, fill = name)) + -->
+<!--   geom_vline(xintercept = expect[1], color = "red") + -->
+<!--   geom_vline(xintercept = expect[2], color = "blue") + -->
+<!--   geom_density(alpha = 0.5) + -->
+<!--   theme_base() -->
+
+<!-- ``` -->
 
