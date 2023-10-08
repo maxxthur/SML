@@ -353,11 +353,43 @@ Finally all results can be found in Table 2.
 
 ```{r}
 # prepare the 
-df_table <- data.frame()
+df_table <- data.frame(variable = names(fit_full$coefficients), 
+                       full_model = fit_full$coefficients)
 
-names(fit_full$coefficients)
+best_subset_df <- data.frame(variable = names(fits[[best_index]]$coefficients), 
+                             best_subset = fits[[best_index]]$coefficients)
+
+backward_df <- data.frame(variable = names(backwards_step$coefficients), 
+                             backward = backwards_step$coefficients)
+
+# merge tables
+merge1 <- merge(df_table, best_subset_df, by = "variable", all.x = T)
+df_table_final <- merge(merge1, backward_df, by = "variable", all.x = T)
+
+# add MSE within and out of sample
+MSE <- data.frame(variable = c("In Sample MSE", 
+                               "Out of Sample MSE"), 
+                  full_model = c(MSE_full_in, 
+                                 MSE_full_out), 
+                  best_subset = c(MSE_BS_in, 
+                                  MSE_BS_out), 
+                  backward = c(MSE_backwards_in, 
+                               MSE_backwards_out))
+
+# bind together
+df_table_final_mse <- rbind(df_table_final, MSE)
+
+# do some formatting
+df_table_final_mse[, -1] <- round(df_table_final_mse[, -1], 2)
+df_table_final_mse[is.na(df_table_final_mse)] <- ""
+
+# create table with kable
+kable(df_table_final_mse, booktabs = T, caption = "Results for Different Selection Methods.", 
+      col.names = c("", "Full model", "Best Subset Selection", "Backwards Stepwise"), digits = 2) |>
+  pack_rows("Regression Coefficients", 1, 11, hline_after = T, latex_align = "c") |>
+  pack_rows("Performance", 12, 13, hline_after = T, latex_align = "c")
 ```
-
+We see that Best Subset Selection as well as Backwards Stepwise Selection yield the same model and thus consequently the same MSE within and out of sample. The selected models are much more sparse than the full one. We can also see, that only those variables have been selected by the two methods which have large coefficients in absolute terms. This seems sensible in light of the discussion about standardized regression in Task 7. Interestingly however, both within and out of sample MSE are slightly better for the full model. 
 
 
 <!-- ## Task 9 -->
