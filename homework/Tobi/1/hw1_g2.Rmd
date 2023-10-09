@@ -17,9 +17,9 @@ Consider a set of training data $\left(\boldsymbol{x}_1, y_1\right), \ldots, \le
 
 We want to show that: 
 \[
-\mathrm{E}\left[R_{t r}(\hat{\beta})\right] \leq \mathrm{E}\left[R_{t r}(\mathrm{E} \hat{\beta})\right]=\mathrm{E}\left[R_{t e}(\mathrm{E} \hat{\beta})\right] \leq \mathrm{E}\left[R_{t e}(\hat{\beta})\right]
+\mathrm{E}\left[R_{t r}(\hat{\beta})\right] \leq \mathrm{E}\left[R_{t r}\left(\mathrm{E} \left(\hat{\beta}\right)\right)\right]=\mathrm{E}\left[R_{t e}\left(\mathrm{E} \left(\hat{\beta}\right)\right)\right] \leq \mathrm{E}\left[R_{t e}(\hat{\beta})\right]
 \]
-where $R_{tr}(\hat{beta})=\frac{1}{N} \sum_{i=1}^N\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2$ and $R_{tr}(\hat{beta})=\frac{1}{M} \sum_{i=1}^M\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2$
+where $R_{tr}(\hat{\beta})=\frac{1}{N} \sum_{i=1}^N\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2$ and $R_{tr}(\hat{\beta})=\frac{1}{M} \sum_{i=1}^M\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2$
 
 \textbf{Solution:}
 
@@ -74,21 +74,21 @@ where $R_{tr}(\hat{beta})=\frac{1}{N} \sum_{i=1}^N\left(y_i-\boldsymbol{x}_i^{\t
    Starting with the expected test error:
 
    \[
-   \begin{align*}
+   \begin{aligned}
    \mathrm{E}[R_{te}(\hat{\beta})] &= \mathrm{E}\left(\tilde{Y}-\tilde{\boldsymbol{X}}^{\top} \hat{\beta}\right)^2 \\
    &= \mathrm{E}\left(\tilde{Y}^2-2 \tilde{Y} \tilde{\boldsymbol{X}}^{\top} \hat{\beta}+\left( \tilde{\boldsymbol{X}}^{\top}\hat{\beta}\right)^2\right) \\
    &= \tilde{Y}^2-2 \tilde{Y}\tilde{\boldsymbol{X}}^{\top} \mathrm{E}\left(\hat{\beta}\right) +\tilde{\boldsymbol{X}}^{\top}\mathrm{E}\left(\hat{\beta}\hat{\beta}^{\top}\right) \tilde{\boldsymbol{X}} \\
    &= \tilde{Y}^2-2 \tilde{Y}\tilde{\boldsymbol{X}}^{\top} \mathrm{E}\left(\hat{\beta}\right) +\tilde{\boldsymbol{X}}^{\top}\left[\mathrm{E}\left(\hat{\beta}\right)\mathrm{E}\left(\hat{\beta}^{\top}\right)+Cov\left(\hat{\beta}\right)\right] \tilde{\boldsymbol{X}}
-   \end{align*}
+   \end{aligned}
    \]
 
    Since the covariance matrix is positive semi-definite, $X^T \operatorname{Cov}(\beta) X \geq 0$, we have:
    
 \[
-\begin{align*}
+\begin{aligned}
 \mathrm{E}[R_{te}(\hat{\beta})] &\geq \tilde{Y}^2-2 \tilde{Y} \tilde{\boldsymbol{X}}^{\top}\mathrm{E}(\hat{\beta})+\tilde{\boldsymbol{X}}^{\top}\mathrm{E}(\hat{\beta})\mathrm{E}(\hat{\beta}^{\top}) \tilde{\boldsymbol{X}} \\
 &\geq \left(\tilde{Y}-\tilde{\boldsymbol{X}}^{\top}\mathrm{E}(\hat{\beta})\right)^2
-\end{align*}
+\end{aligned}
 \]
 
    This implies:
