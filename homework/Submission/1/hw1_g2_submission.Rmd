@@ -15,19 +15,264 @@ Jacopo, Marcell
 
 ## Task 2
 
-Marcell
+
+Consider a set of training data $\left(\boldsymbol{x}_1, y_1\right), \ldots, \left(\boldsymbol{x}_N, y_N\right)$ drawn at random from a population and some test data $\left(\tilde{\boldsymbol{x}}_1, \tilde{y}_1\right), \ldots, \left(\tilde{\boldsymbol{x}}_M, \tilde{y}_M\right)$ also drawn at random from the same population as the training data are given.
+
+We want to show that: 
+\[
+\mathrm{E}\left[R_{t r}(\hat{\beta})\right] \leq \mathrm{E}\left[R_{t r}\left(\mathrm{E} \left(\hat{\beta}\right)\right)\right]=\mathrm{E}\left[R_{t e}\left(\mathrm{E} \left(\hat{\beta}\right)\right)\right] \leq \mathrm{E}\left[R_{t e}(\hat{\beta})\right]
+\]
+where $R_{tr}(\hat{\beta})=\frac{1}{N} \sum_{i=1}^N\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2$ and $R_{tr}(\hat{\beta})=\frac{1}{M} \sum_{i=1}^M\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2$
+
+\textbf{Solution:}
+
+
+1. \textbf{Proving the left inequality:}
+
+   Starting with the definition of $\hat{\beta}$ obtained from the training data:
+
+   \[
+   \hat{\beta} = \arg \min_{\beta'} \frac{1}{N} \sum_{i=1}^N\left(y_i-\boldsymbol{x}_i^{\top} \beta'\right)^2
+   \]
+
+   Since $\hat{\beta}$ minimizes the training error, we have:
+
+   \[
+   R_{tr}(\hat{\beta}) \leq R_{tr}(\beta)
+   \]
+
+   Now, taking the expectation of both sides:
+
+   \[
+   \mathrm{E}\left[R_{tr}(\hat{\beta})\right] \leq \mathrm{E}\left[R_{tr}(\beta)\right]
+   \]
+
+   The random variable $\hat{\beta}$ depends on the training data, but we can take its expectation, resulting in a fixed, non-random vector $\mathrm{E}(\hat{\beta})$. Substituting this into the above inequality:
+
+   \[
+   \mathrm{E}\left[R_{tr}(\hat{\beta})\right] \leq \mathrm{E}\left[R_{tr}(\mathrm{E}(\hat{\beta}))\right]
+   \]
+
+   This proves the left inequality.
+   
+
+2. \textbf{Proving the middle equality:}
+
+   For any fixed vector $\beta$, the expected training error $\mathrm{E}[R_{tr}(\beta)]$ and the expected test error $\mathrm{E}[R_{te}(\beta)]$ are given by:
+
+   \[
+   \mathrm{E}[R_{tr}(\beta)] = \frac{1}{N} \sum_{i=1}^N \mathrm{E}\left[(y_i-\boldsymbol{x}_i^{\top} \beta)^2\right] = \mathrm{E}\left[(Y-\boldsymbol{X}^{\top} \beta)^2\right]
+   \]
+
+   \[
+   \mathrm{E}[R_{te}(\beta)] = \frac{1}{M} \sum_{i=1}^M \mathrm{E}\left[(\tilde{y}_i-\tilde{\boldsymbol{x}}_i^{\top} \beta)^2\right] = \mathrm{E}\left[(\tilde{Y}-\tilde{\boldsymbol{X}}^{\top} \beta)^2\right]
+   \]
+
+   This equality holds because both the training and test data come from the same distribution.
+
+3. \textbf{Proving the right inequality:}
+
+   We treat $\hat{\beta}$ as a random vector independent from the test data due to the independence between the training and test data. For this part, we can forget about the training data and think of $\hat{\beta}$ as a random vector independent of the (test) data.
+
+   Starting with the expected test error:
+
+   \[
+   \begin{aligned}
+   \mathrm{E}[R_{te}(\hat{\beta})] &= \mathrm{E}\left(\tilde{Y}-\tilde{\boldsymbol{X}}^{\top} \hat{\beta}\right)^2 \\
+   &= \mathrm{E}\left(\tilde{Y}^2-2 \tilde{Y} \tilde{\boldsymbol{X}}^{\top} \hat{\beta}+\left( \tilde{\boldsymbol{X}}^{\top}\hat{\beta}\right)^2\right) \\
+   &= \tilde{Y}^2-2 \tilde{Y}\tilde{\boldsymbol{X}}^{\top} \mathrm{E}\left(\hat{\beta}\right) +\tilde{\boldsymbol{X}}^{\top}\mathrm{E}\left(\hat{\beta}\hat{\beta}^{\top}\right) \tilde{\boldsymbol{X}} \\
+   &= \tilde{Y}^2-2 \tilde{Y}\tilde{\boldsymbol{X}}^{\top} \mathrm{E}\left(\hat{\beta}\right) +\tilde{\boldsymbol{X}}^{\top}\left[\mathrm{E}\left(\hat{\beta}\right)\mathrm{E}\left(\hat{\beta}^{\top}\right)+Cov\left(\hat{\beta}\right)\right] \tilde{\boldsymbol{X}}
+   \end{aligned}
+   \]
+
+   Since the covariance matrix is positive semi-definite, $X^T \operatorname{Cov}(\beta) X \geq 0$, we have:
+   
+\[
+\begin{aligned}
+\mathrm{E}[R_{te}(\hat{\beta})] &\geq \tilde{Y}^2-2 \tilde{Y} \tilde{\boldsymbol{X}}^{\top}\mathrm{E}(\hat{\beta})+\tilde{\boldsymbol{X}}^{\top}\mathrm{E}(\hat{\beta})\mathrm{E}(\hat{\beta}^{\top}) \tilde{\boldsymbol{X}} \\
+&\geq \left(\tilde{Y}-\tilde{\boldsymbol{X}}^{\top}\mathrm{E}(\hat{\beta})\right)^2
+\end{aligned}
+\]
+
+   This implies:
+
+   \[
+   \mathrm{E}[R_{te}(\hat{\beta})] \geq \mathrm{E}\left(\tilde{Y}- \tilde{\boldsymbol{X}}^{\top}\mathrm{E}\left(\hat{\beta}\right)\right)^2 = \mathrm{E}\left(R_{te}(\mathrm{E}\left(\hat{\beta}\right))\right)
+   \]
+
+   Thus, we've proved the right inequality.
+
+Therefore, we have established that:
+
+\[
+\mathrm{E}\left[\frac{1}{N} \sum_{i=1}^N\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2\right] \leq \mathrm{E}\left[\frac{1}{M} \sum_{i=1}^M\left(y_i-\boldsymbol{x}_i^{\top} \hat{\beta}\right)^2\right]
+\]
+
 
 ## Task 3
 
-Marcell
+We have:
+
+\[Y = \beta_0 + \beta_1X + \epsilon\]
+
+where:
+\begin{align*}
+Y & \text{ is the dependent variable,} \\
+X & \text{ is the independent variable,} \\
+\beta_0 & \text{ and } \beta_1 \text{ are the regression coefficients, and} \\
+\epsilon & \text{ is the error term.}
+\end{align*}
+
+The predicted value of $Y$ can be expressed as:
+
+\[\hat{Y} = \beta_0 + \beta_1X\]
+
+The sum of squared errors (SSE) can be expressed as:
+
+\[SSE = \sum(Y_i - \hat{Y}_i)^2\]
+
+The total sum of squares (SST) can be expressed as:
+
+\[SST = \sum(Y_i - \bar{Y})^2\]
+
+where:
+\begin{align*}
+Y_i & \text{ is the observed value of } Y, \\
+\hat{Y}_i & \text{ is the predicted value of } Y, \\
+\bar{Y} & \text{ is the mean of } Y.
+\end{align*}
+
+The coefficient of determination ($R^2$) is defined as:
+
+\[R^2 = 1 - \frac{SSE}{SST}\]
+
+To find the values of $\beta_0$ and $\beta_1$ that minimize SSE, we take the partial derivatives of SSE with respect to $\beta_0$ and $\beta_1$ and set them equal to zero. This gives us the following equations:
+
+\[\sum Y_i = n\beta_0 + \beta_1\sum X_i\]
+
+\[\sum(Y_iX_i) = \beta_0\sum X_i + \beta_1\sum(X_i^2)\]
+
+Solving for $\beta_0$ and $\beta_1$, we get:
+
+\[\beta_1 = \frac{\sum(X_i - \bar{X})(Y_i - \bar{Y})}{\sum(X_i - \bar{X})^2}\]
+
+\[\beta_0 = \bar{Y} - \beta_1\bar{X}\]
+
+where:
+\begin{align*}
+\bar{X} & \text{ is the mean of } X, \\
+\bar{Y} & \text{ is the mean of } Y.
+\end{align*}
+
+The correlation coefficient between $X$ and $Y$ can be expressed as:
+
+\[r_{xy} = \frac{\sum(X_i - \bar{X})(Y_i - \bar{Y})}{\sqrt{\sum(X_i - \bar{X})^2 \sum(Y_i - \bar{Y})^2}}\]
+
+Substituting the values of $\beta_0$ and $\beta_1$ into the formula for $\hat{Y}_i$, we get:
+
+\[\hat{Y}_i = \beta_0 + \beta_1X_i = \bar{Y} + r_{xy} \left(Y_i - \bar{Y}\right) / (s_Y \sqrt{s_X^2})\]
+
+where:
+\begin{align*}
+s_X & \text{ is the standard deviation of } X, \\
+s_Y & \text{ is the standard deviation of } Y.
+\end{align*}
+
+Substituting this into the formula for SST, we get:
+
+\[SST = \sum(Y_i - \bar{Y})^2 = \sum(Y_i - \hat{Y}_i + \hat{Y}_i - \bar{Y})^2 = \sum(Y_i - \hat{Y}_i)^2 + \sum(\hat{Y}_i - \bar{Y})^2\]
+
+The second term in this equation can be expressed as:
+
+\[\sum(\hat{Y}_i - \bar{Y})^2 = r_{xy}^2 \sum(Y_i - \bar{Y})^2 / (s_Y^2)\]
+
+Substituting this into the formula for $R^2$, we get:
+
+\[R^2 = 1 - \frac{SSE}{SST} = 1 - \frac{\sum(Y_i - \hat{Y}_i)^2}{\sum(Y_i - \bar{Y})^2} = r_{xy}^2\]
+
+Therefore, we have shown that the coefficient of determination given by the $R^2$ statistic is equal to the square of the correlation between $X$ and $Y$ in the simple linear regression case, where $Y = \beta_0 + \beta_1X + \epsilon$ and the regression coefficients $(\beta_0, \beta_1)$ are estimated using ordinary least squares.
+
 
 ## Task 4
 
-Marcell, Tobi
+Given a linear regression model with 
+$$
+\boldsymbol{y}=\boldsymbol{X} \beta+\epsilon
+$$
+
+where $\mathrm{E}(\epsilon)=\mathbf{0}$, $\operatorname{Var}(\epsilon)=\sigma^2 \boldsymbol{I}$
+, and $\boldsymbol{X}$ is orthonormal, we need to show that there always exists a value of the penalty parameter $\lambda$ such that the ridge estimator has lower mean squared error than the OLS estimator.
+The ridge estimator is given by 
+
+$$
+\hat{\beta}^{\text {ridge }}(\lambda)=\left(\boldsymbol{X}^{\top} \boldsymbol{X}+\lambda \boldsymbol{I}\right)^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}
+$$
+, and the OLS estimator is given by 
+
+$$
+\tilde{\beta}=(\boldsymbol{X}^{\top} \boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}
+$$.
+
+The mean squared error of an estimator $\hat{\beta}$ is given by 
+
+$$
+\mathrm{E}\left[(\hat{\beta}-\beta)^{\top}(\hat{\beta}-\beta)\right]
+$$.
+
+Since $\boldsymbol{X}$ is orthonormal, we have $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$, and therefore the OLS estimator simplifies to $\tilde{\beta}=\boldsymbol{X}^{\top} \boldsymbol{y}$.
+The mean squared error of the OLS estimator is then 
+
+$$
+\mathrm{E}\left[(\tilde{\beta}-\beta)^{\top}(\tilde{\beta}-\beta)\right]=\mathrm{E}\left[(\boldsymbol{X}^{\top} \boldsymbol{y}-\beta)^{\top}(\boldsymbol{X}^{\top} \boldsymbol{y}-\beta)\right]
+$$.
+
+Using the fact that $\boldsymbol{X}$ is orthonormal, we can rewrite the ridge estimator as 
+
+$$
+\hat{\beta}^{\text {ridge }}(\lambda)=\boldsymbol{X}^{\top}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{y}
+$$.
+The mean squared error of the ridge estimator is then 
+
+$$
+\mathrm{E}\left[(\hat{\beta}^{\text {ridge }}(\lambda)-\beta)^{\top}(\hat{\beta}^{\text {ridge }}(\lambda)-\beta)\right]=\mathrm{E}\left[(\boldsymbol{X}^{\top}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{y}-\beta)^{\top}(\boldsymbol{X}^{\top}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{y}-\beta)\right]
+$$.
+
+To show that there exists a value of $\lambda$ such that the ridge estimator has lower mean squared error than the OLS estimator, we need to show that there exists a value of $\lambda$ such that 
+
+$$
+\mathrm{E}\left[(\hat{\beta}^{\text {ridge }}(\lambda)-\beta)^{\top}(\hat{\beta}^{\text {ridge }}(\lambda)-\beta)\right]<\mathrm{E}\left[(\boldsymbol{X}^{\top} \boldsymbol{y}-\beta)^{\top}(\boldsymbol{X}^{\top} \boldsymbol{y}-\beta)\right]
+$$.
+
+This inequality can be rewritten as 
+
+$$
+\mathrm{E}\left[\boldsymbol{y}^{\top}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{X}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{y}\right]<\mathrm{E}\left[\boldsymbol{y}^{\top} \boldsymbol{X}(\boldsymbol{X}^{\top} \boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}\right]
+$$.
+
+Using the fact that $\boldsymbol{X}$ is orthonormal, we have $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$, and therefore the inequality simplifies to 
+
+$$
+\mathrm{E}\left[\boldsymbol{y}^{\top}(\boldsymbol{I}+\lambda (\boldsymbol{X}^{\top} \boldsymbol{X})^{-1})^{-2} \boldsymbol{y}\right]<\mathrm{E}\left[\boldsymbol{y}^{\top} \boldsymbol{y}\right]
+$$.
+This inequality holds for any value of $\lambda>0$, since the left-hand side is a decreasing function of $\lambda$ and the right-hand side is a constant. Therefore, there always exists a value of the penalty parameter $\lambda$ such that the ridge estimator has lower mean squared error than the OLS estimator.
 
 ## Task 5
 
-Tobi
+The $k$-nearest-neighbour representation is defined as:
+$$\hat f(x_0) = \frac{1}{k}\sum_{i=1}^N  \mathbf{1}_{x_i \in N_k(x_0)}y_i$$
+where $N_k(x_0)$ is the neighborhood of $x_0$ defined by the $k$ closest points $x_i$. Therefore the weights are 
+$$\ell_i(x_0; \mathcal X) = \frac{1}{k} \mathbf{1}_{x_i \in N_k(x_0)}$$
+and the $k$-nearest-neighbor regression is a member of this class.
+
+
+For the linear regression the we can predict $f$ by 
+$$\hat f(x_0) = x_0^T \beta$$
+where $\beta = (X^T X)^{-1} X^T y$.  Therefore we have
+$$\hat f(x_0) = \sum_{i=1}^N \left( x_0^T (X^T X)^{-1} X^T \right)_i y_i.$$
+Hence the weights are
+$$\ell_i(x_0; \mathcal X) = \left( x_0^T (X^T X)^{-1} X^T \right)_i$$
+and the linear regression is part of this class.
+
 
 ## Task 6
 
