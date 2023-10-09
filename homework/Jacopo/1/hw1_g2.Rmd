@@ -28,7 +28,7 @@ $$
 \end{aligned}
 $$
 
-Now we make two observations. The first is that in the first term we obtain a constant which does not depend on $\theta$. Secondly, the term $\sum_j^J (y_j - \overline{y_k})$ equals 0, since they are distances from the mean. Hence, we remain with the last term,
+Now we make two observations. The first is that in the first term we obtain a constant which does not depend on $\theta$. Secondly, the term $\sum_j^J (y_{ij} - \overline{y_i})$ equals 0, since they are distances from the mean. Hence, we remain with the last term,
 which is precisely what we want to show.
 
 * Explain how the least squares problem changes if the design is not balanced, i.e., one has different number of repetitions for each input $x_i$
