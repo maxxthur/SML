@@ -16,15 +16,15 @@ Consider a balanced regression problem where for each input $x_i, i = 1,...,N$, 
 
 * Show that the fit can be obtained from a least squares problem involving only xi and the average values $\overline{y_i} =\frac{1}{J} \sum_{j = 1}^{J} y_{ij}$
 
-The problem basically says that we have $N$ groups, and for each we have $J$ realizations $y_{ij}$. Therefore, we will indicate from now on the total number of observations as $K = N \times J$. In the first step we take subtract and add the groups means. We thus define the RSS as the following:
+The problem basically says that we have $N$ groups, and for each we have $J$ realizations $y_{ij}$. Therefore, we will indicate from now on the total number of observations as $K = N \cdot J$. In the first step we subtract and add the groups means. We thus define the RSS as the following:
 
 
 $$
 \begin{aligned}
 &RSS  = \sum_k^K  (y_k - f_{\theta}(x_k) )^2 =\\
 & \sum_k^K  (y_k - \overline{y_k} + \overline{y_k} - f_{\theta}(x_k) )^2 =\\
-& \sum_k^K  (y_k - \overline{y_k})^2 + 2 \sum_k^K (y_k - \overline{y_k}) (\overline{y_k} - f_{\theta}(x_k)) +  \sum_k^K (\overline{y_k} - f_{\theta}(x_k) )^2\\
-& \sum_k^K  (y_k - \overline{y_k} )^2 + 2 \sum_i^N (\overline{y_i} - f_{\theta}(x_i) ) \sum_j^J(y_j - \overline{y_k}) + \sum_i^N \sum_j^J (\overline{y_i} - f_{\theta}(x_i) )^2
+& \sum_k^K  (y_k - \overline{y_k})^2 + 2 \sum_k^K (y_k - \overline{y_k}) (\overline{y_k} - f_{\theta}(x_k)) +  \sum_k^K (\overline{y_k} - f_{\theta}(x_k) )^2 = \\
+& \sum_k^K  (y_k - \overline{y_k} )^2 + 2 \sum_i^N (\overline{y_i} - f_{\theta}(x_i) ) \sum_j^J(y_{ij} - \overline{y_i}) + \sum_i^N \sum_j^J (\overline{y_i} - f_{\theta}(x_i) )^2
 \end{aligned}
 $$
 
