@@ -1,0 +1,89 @@
+---
+title: "Assignment 2"
+author: "Group 2"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Task 1
+
+## Task 2
+
+## Task 3
+
+## Task 4
+
+## Task 5
+
+## Task 6
+
+```{r}
+library(MASS)
+
+set.seed(123)
+
+# a) draw from standard multivariate normal
+X <- mvrnorm(n = 100, mu = rep(0, 100), Sigma = diag(1, nrow = 100, ncol = 100))
+names(X) <- paste0("X", 1:100)
+
+# b) use 10 first columns of X and simulated noise to get y
+y <- apply(X[, 1:10], MARGIN = 1, FUN = sum) + rnorm(100, mean = 0, sd = sqrt(0.01))
+
+# c) fit LASSO and ridge models with different values of λ 
+
+library(glmnet)
+
+# alpha = 0 is RIDGE, alpha = 1 is LASSO according to elastic net mixing
+
+# glmnet chooses suitable lambda values itself but one could also specify the
+# lambda sequence manually (argument: lambda = sequence). We go with the implemented selection of lambda as
+# we expect sensible behavior.
+
+RIDGE <- glmnet(x = X, y = y, alpha = 0)
+
+LASSO <- glmnet(x = X, y = y, alpha = 1)
+```
+
+```{r}
+# d) plot for RIDGE
+plot(RIDGE)
+
+# d) plot with xvar = lambda
+plot(RIDGE, xvar = "lambda")
+```
+
+```{r}
+# d) plot for LASSO
+plot(LASSO)
+
+# d) plot with xvar = lambda
+plot(LASSO, xvar = "lambda")
+```
+```{r}
+# get deviance and lambda
+RIDGE_dev_l <- data.frame(deviance = deviance(RIDGE), lambda = RIDGE$lambda)
+LASSO_dev_l <- data.frame(deviance = deviance(LASSO), lambda = LASSO$lambda)
+
+# get number of non-zero coefficients and lambda
+# step 1 extract coefficients. Rows are Variables, columns correspond to lambda
+RIDGE_coef <- coef(RIDGE)
+LASSO_coef <- coef(LASSO)
+
+# define an effective 0 as .Machine$double.eps and treat everything smaller as 0
+# column sum of logical matrix provides number of non zero coefficients
+RIDGE_coef_non_zero <- apply(RIDGE_coef < .Machine$double.eps, MARGIN = 2, sum)
+LASSO_coef_non_zero <- apply(LASSO_coef < .Machine$double.eps, MARGIN = 2, sum)
+```
+
+
+## Task 7
+
+## Task 8
+
+## Task 9
+
+## Task 10

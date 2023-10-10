@@ -11,10 +11,35 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Task 1
 
-Jacopo, Marcell
+Consider a balanced regression problem where for each input $x_i, i = 1,...,N$, one has J repeated outputs $y{_ij}, j = 1,...,J$ and one fits a parameterized model $f_{\theta}(x)$ by least squares.
+
+* Show that the fit can be obtained from a least squares problem involving only xi and the average values $\overline{y_i} =\frac{1}{J} \sum_{j = 1}^{J} y_{ij}$
+
+The problem basically says that we have $N$ groups, and for each we have $J$ realizations $y_{ij}$. Therefore, we will indicate from now on the total number of observations as $K = N \cdot J$. In the first step we subtract and add the groups means. We thus define the RSS as the following:
+
+
+$$
+\begin{aligned}
+&RSS  = \sum_k^K  (y_k - f_{\theta}(x_k) )^2 =\\
+& \sum_k^K  (y_k - \overline{y_k} + \overline{y_k} - f_{\theta}(x_k) )^2 =\\
+& \sum_k^K  (y_k - \overline{y_k})^2 + 2 \sum_k^K (y_k - \overline{y_k}) (\overline{y_k} - f_{\theta}(x_k)) +  \sum_k^K (\overline{y_k} - f_{\theta}(x_k) )^2 = \\
+& \sum_k^K  (y_k - \overline{y_k} )^2 + 2 \sum_i^N (\overline{y_i} - f_{\theta}(x_i) ) \sum_j^J(y_{ij} - \overline{y_i}) + \sum_i^N \sum_j^J (\overline{y_i} - f_{\theta}(x_i) )^2
+\end{aligned}
+$$
+
+Now we make two observations. The first is that in the first term we obtain a constant which does not depend on $\theta$. Secondly, the term $\sum_j^J (y_{ij} - \overline{y_i})$ equals 0, since they are distances from the mean. Hence, we remain with the last term,
+which is precisely what we want to show.
+
+* Explain how the least squares problem changes if the design is not balanced, i.e., one has different number of repetitions for each input $x_i$
+
+If we add the point that we have different number of observations for each group, then we have that:
+$$
+RSS = \sum_i^N w_i (\overline{y_i} - f_{\theta}(x_i) )^2
+$$
+where $w_i$ is the number of observations for each group $i$.
+
 
 ## Task 2
-
 
 Consider a set of training data $\left(\boldsymbol{x}_1, y_1\right), \ldots, \left(\boldsymbol{x}_N, y_N\right)$ drawn at random from a population and some test data $\left(\tilde{\boldsymbol{x}}_1, \tilde{y}_1\right), \ldots, \left(\tilde{\boldsymbol{x}}_M, \tilde{y}_M\right)$ also drawn at random from the same population as the training data are given.
 
@@ -195,66 +220,19 @@ Therefore, we have shown that the coefficient of determination given by the $R^2
 
 ## Task 4
 
-Given a linear regression model with 
-$$
-\boldsymbol{y}=\boldsymbol{X} \beta+\epsilon
-$$
+OLS estimator: $$\hat{\beta}=(X^TX)^{-1}X^Ty$$
+Ridge estimator: $$\hat{\beta}^{ridge}(\lambda)=(X^TX+\lambda I)^{-1}X^Ty$$
+For $X$ orthonormal we get:\
 
-where $\mathrm{E}(\epsilon)=\mathbf{0}$, $\operatorname{Var}(\epsilon)=\sigma^2 \boldsymbol{I}$
-, and $\boldsymbol{X}$ is orthonormal, we need to show that there always exists a value of the penalty parameter $\lambda$ such that the ridge estimator has lower mean squared error than the OLS estimator.
-The ridge estimator is given by 
+OLS estimator: $$X^Ty$$
+Ridge estimator: $$\hat{\beta}^{ridge}(\lambda)=((1+\lambda)I)^{-1}X^Ty$$
+Now we look at the MSE, which we can get by the formula:
+$$\mathbb{E}[(\hat{\beta}-\beta)^T(\hat{\beta}-\beta)]$$
+Therefore we get:
+$$MSE_{OLS}=\mathbb{E}[(X^Ty-\beta)^T(X^Ty-\beta)]$$
+$$MSE_{ridge}=\mathbb{E}[(((1+\lambda)I)^{-1}X^Ty-\beta)^T(((1+\lambda)I)^{-1}X^Ty-\beta)]$$
+Now for $\lambda=0$ we get that $MSE_{OLS}=MSE_{ridge}$ and otherwise it is always possible to find a $\lambda$, so that we can scale $X^Ty$ to make the MSE of the ridge estimator smaller, as the $MSE_{OLS}$ gets bigger, if $X^Ty-\beta$ gets bigger.
 
-$$
-\hat{\beta}^{\text {ridge }}(\lambda)=\left(\boldsymbol{X}^{\top} \boldsymbol{X}+\lambda \boldsymbol{I}\right)^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}
-$$
-, and the OLS estimator is given by 
-
-$$
-\tilde{\beta}=(\boldsymbol{X}^{\top} \boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}
-$$.
-
-The mean squared error of an estimator $\hat{\beta}$ is given by 
-
-$$
-\mathrm{E}\left[(\hat{\beta}-\beta)^{\top}(\hat{\beta}-\beta)\right]
-$$.
-
-Since $\boldsymbol{X}$ is orthonormal, we have $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$, and therefore the OLS estimator simplifies to $\tilde{\beta}=\boldsymbol{X}^{\top} \boldsymbol{y}$.
-The mean squared error of the OLS estimator is then 
-
-$$
-\mathrm{E}\left[(\tilde{\beta}-\beta)^{\top}(\tilde{\beta}-\beta)\right]=\mathrm{E}\left[(\boldsymbol{X}^{\top} \boldsymbol{y}-\beta)^{\top}(\boldsymbol{X}^{\top} \boldsymbol{y}-\beta)\right]
-$$.
-
-Using the fact that $\boldsymbol{X}$ is orthonormal, we can rewrite the ridge estimator as 
-
-$$
-\hat{\beta}^{\text {ridge }}(\lambda)=\boldsymbol{X}^{\top}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{y}
-$$.
-The mean squared error of the ridge estimator is then 
-
-$$
-\mathrm{E}\left[(\hat{\beta}^{\text {ridge }}(\lambda)-\beta)^{\top}(\hat{\beta}^{\text {ridge }}(\lambda)-\beta)\right]=\mathrm{E}\left[(\boldsymbol{X}^{\top}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{y}-\beta)^{\top}(\boldsymbol{X}^{\top}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{y}-\beta)\right]
-$$.
-
-To show that there exists a value of $\lambda$ such that the ridge estimator has lower mean squared error than the OLS estimator, we need to show that there exists a value of $\lambda$ such that 
-
-$$
-\mathrm{E}\left[(\hat{\beta}^{\text {ridge }}(\lambda)-\beta)^{\top}(\hat{\beta}^{\text {ridge }}(\lambda)-\beta)\right]<\mathrm{E}\left[(\boldsymbol{X}^{\top} \boldsymbol{y}-\beta)^{\top}(\boldsymbol{X}^{\top} \boldsymbol{y}-\beta)\right]
-$$.
-
-This inequality can be rewritten as 
-
-$$
-\mathrm{E}\left[\boldsymbol{y}^{\top}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{X}(\boldsymbol{X} \boldsymbol{X}^{\top}+\lambda \boldsymbol{I})^{-1} \boldsymbol{y}\right]<\mathrm{E}\left[\boldsymbol{y}^{\top} \boldsymbol{X}(\boldsymbol{X}^{\top} \boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}\right]
-$$.
-
-Using the fact that $\boldsymbol{X}$ is orthonormal, we have $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$, and therefore the inequality simplifies to 
-
-$$
-\mathrm{E}\left[\boldsymbol{y}^{\top}(\boldsymbol{I}+\lambda (\boldsymbol{X}^{\top} \boldsymbol{X})^{-1})^{-2} \boldsymbol{y}\right]<\mathrm{E}\left[\boldsymbol{y}^{\top} \boldsymbol{y}\right]
-$$.
-This inequality holds for any value of $\lambda>0$, since the left-hand side is a decreasing function of $\lambda$ and the right-hand side is a constant. Therefore, there always exists a value of the penalty parameter $\lambda$ such that the ridge estimator has lower mean squared error than the OLS estimator.
 
 ## Task 5
 
