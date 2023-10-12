@@ -132,8 +132,8 @@ boundary <- function(mu, sigma) {
     x2 = 1/(sigma^2) * (- mu - sqrt(sigma^2 * mu^2 + 2*log(sigma) * (sigma^4 + sigma^2))))
 }
 
-boundary(mu = 0, sigma = sqrt(2))
-boundary(mu = 1, sigma = sqrt(1))
+b02 <- boundary(mu = 0, sigma = sqrt(2))
+b11 <- boundary(mu = 1, sigma = sqrt(1))
 ```
 
 
@@ -155,7 +155,8 @@ n11 <- rnorm(n, mean = 1, sd = 1)
 df <- data.frame(sn = sn, n02 = n02, n11 = n11) %>% 
   pivot_longer(cols = c(n02, n11))
 
-# plot the densities
+# plot the densities (boundaries have to be inserted but not so easy with one 
+# ggplot, maybe make two. Then it is just adding to vertical lines.)
 ggplot(data = df) +
   geom_density(aes(x = sn)) +
   geom_density(aes(x = value), color = "red") +
