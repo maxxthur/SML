@@ -75,14 +75,97 @@ LASSO_coef <- coef(LASSO)
 
 # define an effective 0 as .Machine$double.eps and treat everything smaller as 0
 # column sum of logical matrix provides number of non zero coefficients
-RIDGE_coef_non_zero <- apply(RIDGE_coef < .Machine$double.eps, MARGIN = 2, sum)
-LASSO_coef_non_zero <- apply(LASSO_coef < .Machine$double.eps, MARGIN = 2, sum)
+RIDGE_coef_non_zero <- apply(RIDGE_coef > .Machine$double.eps, MARGIN = 2, sum)
+LASSO_coef_non_zero <- apply(LASSO_coef > .Machine$double.eps, MARGIN = 2, sum)
+
+# plot deviance in dependence of lambda
+with(RIDGE_dev_l, plot(x = lambda, y = deviance, type = "l"))
+with(LASSO_dev_l, plot(x = lambda, y = deviance, type = "l"))
+
+# plot number of non-zeros in dependence of lambda
+plot(x = RIDGE$lambda, y = RIDGE_coef_non_zero, type = "l")
+plot(x = LASSO$lambda, y = LASSO_coef_non_zero, type = "l")
+
 ```
 
 
 ## Task 7
 
+
+```{r}
+
+
+```
+
 ## Task 8
+
+### a) 
+
+We have to calculate x such that $P(G = 1 \vert x) = P(G = 2\vert x)$. By Bayes' theorem
+we get for $G = i$, $i \in \{1, 2\}$
+
+$$
+P(G = i \vert x) = \frac{P(x \vert G = i)P(G = 1)}{P(X)}
+$$
+As $P(G = 1) = P(G = 2)$ we are left with the condition $P(x \vert G = 1) = P(x \vert G = 2)$. But we know that these are just the conditional distributions of $x$ given in the task. Hence we can now equate the log densities of the standard normal and the normal distribution to obtain an expression for the value(s) of $x$ fulfilling the initial equation. We get
+
+$$
+  \begin{aligned}
+& \frac{1}{\sqrt{2 \pi}} e^{-\frac{1}{2} x^2}=\frac{1}{\sigma \sqrt{2 \pi}} e^{-\frac{1}{2 \sigma^2}(x-\mu)^2}  \\
+& \sigma e^{-\frac{1}{2} x^2}=e^{-\frac{1}{2 \sigma^2}(x-\mu)^2} \\
+& \log (\sigma)-\frac{1}{2} x^2=-\frac{1}{2 \sigma^2}\left(x^2-2 \mu x+\mu^2\right) \\
+& 2 \sigma^2 \log (\sigma)-\sigma^2 x^2=-x^2+2 \mu x-\mu^2 \\
+& 0 = (\sigma^2 - 1)x^2 + 2 \mu x - \mu^2 - 2\sigma^2 log(\sigma) \\
+\Rightarrow  & x=\frac{-2 \mu \pm \sqrt{4 \mu^2+4\left(\left(\sigma^2-1\right)\left(\mu^2+2 \sigma^2 \log (\sigma)\right)\right.}}{2 x^2+2} \\
+& =\frac{-2 \mu \pm 2 \sqrt{\mu^2+\sigma^2 \mu^2-\mu^2+2 \sigma^4 \log (\sigma)-2 \sigma^2 \log (\sigma)}}{2\left(\sigma^2-1\right)} \\
+& =\frac{-\mu \pm \sqrt{\sigma^2 \mu^2+2 \log (\sigma)\left(\sigma^4-\sigma^2\right)}}{\sigma^2-i}
+\end{aligned}
+$$
+So we find two points where the probabilities to of $G = 1$ or $G = 2$ are the same for the two normal distrutions. 
+
+### b) 
+
+```{r}
+# get boundary points
+boundary <- function(mu, sigma) {
+  c(x1 = 1/(sigma^2) * (- mu + sqrt(sigma^2 * mu^2 + 2*log(sigma) * (sigma^4 + sigma^2))), 
+    x2 = 1/(sigma^2) * (- mu - sqrt(sigma^2 * mu^2 + 2*log(sigma) * (sigma^4 + sigma^2))))
+}
+
+boundary(mu = 0, sigma = sqrt(2))
+boundary(mu = 1, sigma = sqrt(1))
+```
+
+
+### c)
+
+```{r}
+library(tidyverse)
+library(ggthemes)
+# draw from standard normal 
+n = 10^6
+sn <- rnorm(n)
+
+# draw from mu = 0, sigma^2 = 2
+n02 <- rnorm(n, mean = 0, sd = sqrt(2))
+
+# draw from mu = 1, sigma^2 = 1
+n11 <- rnorm(n, mean = 1, sd = 1)
+
+df <- data.frame(sn = sn, n02 = n02, n11 = n11) %>% 
+  pivot_longer(cols = c(n02, n11))
+
+# plot the densities
+ggplot(data = df) +
+  geom_density(aes(x = sn)) +
+  geom_density(aes(x = value), color = "red") +
+  facet_wrap(~ name) +
+  theme_base()
+
+```
+
+
+
 
 ## Task 9
 
