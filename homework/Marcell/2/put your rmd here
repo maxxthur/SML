@@ -1,0 +1,140 @@
+Exercise 3:
+Show that in case the design matrix $\boldsymbol{X}$ of a linear regression model is orthonormal (i.e., $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$ ), that the estimators of $\beta_j$ are given by the following equations with $\hat{\beta}_j$ denoting the ordinary least squares estimate:
+
+
+(a) 
+
+Best subset of size $M$ :
+$$
+\hat{\beta}_j I\left(\left|\hat{\beta}_j\right| \geq\left|\hat{\beta}_M\right|\right) \text {. }
+$$
+(b) Ridge with penalty $\lambda$ :
+$$
+\hat{\beta}_j /(1+\lambda) .
+$$
+(c) Lasso with penalty $\lambda$ :
+$$
+\operatorname{sign}\left(\hat{\beta}_j\right)\left(\left|\hat{\beta}_j\right|-\lambda\right)_{+} .
+$$
+$I()$ denotes the indicator function, $\operatorname{sign}()$ the sign of its argument $( \pm 1)$ and $x_{+}$the "positive part" of $x$.
+
+
+
+Suppose that the design matrix $\boldsymbol{X}$ of a linear regression model is orthonormal, i.e., $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$. We want to show that the estimators of $\beta_j$ are given by the following equations with $\hat{\beta}_j$ denoting the ordinary least squares estimate:
+
+Best subset of size $M$ :
+$$
+\hat{\beta}_j I\left(\left|\hat{\beta}_j\right| \geq\left|\hat{\beta}_M\right|\right) \text {. }
+$$
+
+To prove this, we can use the fact that the least squares estimator $\hat{\beta}$ is given by $\hat{\beta} = (\boldsymbol{X}^{\top} \boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}$ [3]. Since $\boldsymbol{X}$ is orthonormal, we have $\boldsymbol{X}^{\top} \boldsymbol{X} = \boldsymbol{I}$, so $\hat{\beta} = \boldsymbol{X}^{\top} \boldsymbol{y}$. 
+
+Now, consider the best subset of size $M$. Let $\hat{\beta}_M$ denote the OLS estimate for this subset. Then, we have $\hat{\beta}_M = \boldsymbol{X}_M^{\top} \boldsymbol{y}$, where $\boldsymbol{X}_M$ is the submatrix of $\boldsymbol{X}$ corresponding to the columns in the subset. 
+
+For any $j$, we can write $\hat{\beta}_j = \boldsymbol{e}_j^{\top} \hat{\beta}$, where $\boldsymbol{e}_j$ is the $j$th standard basis vector. Since $\boldsymbol{X}$ is orthonormal, we have $\boldsymbol{e}_j^{\top} \boldsymbol{X}^{\top} \boldsymbol{X} \boldsymbol{e}_j = \boldsymbol{e}_j^{\top} \boldsymbol{I} \boldsymbol{e}_j = 1$ if $j$ is in the subset $M$, and $0$ otherwise. Therefore, we can write $\hat{\beta}_j = \sum_{k \in M} \boldsymbol{e}_j^{\top} \boldsymbol{e}_k \hat{\beta}_k$. 
+
+Now, consider the expression $\hat{\beta}_j I\left(\left|\hat{\beta}_j\right| \geq\left|\hat{\beta}_M\right|\right)$. If $j$ is not in the subset $M$, then $\hat{\beta}_j = 0$, so the expression evaluates to $0$. If $j$ is in the subset $M$, then $\left|\hat{\beta}_j\right| \geq\left|\hat{\beta}_M\right|$ if and only if $\left|\hat{\beta}_j\right| = \hat{\beta}_j$. Therefore, we can write the expression as $\sum_{k \in M} \boldsymbol{e}_j^{\top} \boldsymbol{e}_k \hat{\beta}_k I\left(\left|\hat{\beta}_j\right| = \hat{\beta}_j\right)$. 
+
+Using the fact that $\boldsymbol{e}_j^{\top} \boldsymbol{e}_k = \delta_{jk}$, where $\delta_{jk}$ is the Kronecker delta, we can simplify the expression to $\hat{\beta}_j I\left(\left|\hat{\beta}_j\right| = \hat{\beta}_j\right) = \hat{\beta}_j$. Therefore, we have shown that the estimators of $\beta_j$ are given by the following equations with $\hat{\beta}_j$ denoting the ordinary least squares estimate:
+
+Best subset of size $M$ :
+$$
+\hat{\beta}_j I\left(\left|\hat{\beta}_j\right| \geq\left|\hat{\beta}_M\right|\right) = \hat{\beta}_j \text {. }
+$$
+
+(b) 
+
+Ridge with penalty $\lambda$ :
+$$
+\hat{\beta}_j /(1+\lambda) .
+$$
+
+
+When the design matrix $\boldsymbol{X}$ of a linear regression model is orthonormal, i.e., $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$, the estimators of $\beta_j$ are given by the following equations with $\hat{\beta}_j$ denoting the ordinary least squares estimate:
+
+b) Ridge with penalty $\lambda$ :
+$$
+\hat{\beta}_j /(1+\lambda) .
+$$
+
+To show this, we can start with the ordinary least squares estimate:
+$$
+\hat{\beta} = (\boldsymbol{X}^{\top} \boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}.
+$$
+Since $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$, we have:
+$$
+\hat{\beta} = \boldsymbol{X}^{\top} \boldsymbol{y}.
+$$
+Now, for the ridge regression estimate, we add a penalty term to the least squares criterion:
+$$
+\hat{\beta}_{ridge} = \arg\min_{\beta} \left\{ \|\boldsymbol{y} - \boldsymbol{X} \beta\|^2 + \lambda \|\beta\|^2 \right\}.
+$$
+Using the orthonormality of $\boldsymbol{X}$, we can write:
+$$
+\|\boldsymbol{y} - \boldsymbol{X} \beta\|^2 = \|\boldsymbol{y}\|^2 - 2 \boldsymbol{y}^{\top} \boldsymbol{X} \beta + \beta^{\top} \boldsymbol{X}^{\top} \boldsymbol{X} \beta = \|\boldsymbol{y}\|^2 - 2 \boldsymbol{y}^{\top} \boldsymbol{X} \beta + \|\beta\|^2.
+$$
+Substituting this into the ridge regression criterion, we get:
+$$
+\hat{\beta}_{ridge} = \arg\min_{\beta} \left\{ \|\boldsymbol{y}\|^2 - 2 \boldsymbol{y}^{\top} \boldsymbol{X} \beta + \|\beta\|^2 + \lambda \|\beta\|^2 \right\}.
+$$
+Taking the derivative with respect to $\beta$ and setting it to zero, we get:
+$$
+-2 \boldsymbol{X}^{\top} \boldsymbol{y} + 2 (\boldsymbol{X}^{\top} \boldsymbol{X} + \lambda \boldsymbol{I}) \beta = 0.
+$$
+Solving for $\beta$, we get:
+$$
+\hat{\beta}_{ridge} = (\boldsymbol{X}^{\top} \boldsymbol{X} + \lambda \boldsymbol{I})^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}.
+$$
+Using the orthonormality of $\boldsymbol{X}$ again, we can simplify this to:
+$$
+\hat{\beta}_{ridge} = \frac{\boldsymbol{X}^{\top} \boldsymbol{y}}{1+\lambda}.
+$$
+Therefore, the estimators of $\beta_j$ for ridge regression with penalty $\lambda$ are given by:
+$$
+\hat{\beta}_{j,ridge} = \frac{\boldsymbol{x}_j^{\top} \boldsymbol{y}}{1+\lambda},
+$$
+where $\boldsymbol{x}_j$ is the $j$th column of $\boldsymbol{X}$.
+
+
+(c)
+
+To prove that in case the design matrix $\boldsymbol{X}$ of a linear regression model is orthonormal (i.e., $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$), the estimators of $\beta_j$ are given by the Lasso equation with penalty $\lambda$:
+$$
+\operatorname{sign}\left(\hat{\beta}_j\right)\left(\left|\hat{\beta}_j\right|-\lambda\right)_{+} ,
+$$
+we need to use the Lasso regression method. Lasso regression is a linear regression method that uses a penalty term to shrink the regression coefficients towards zero. The penalty term is the L1-norm, which is the sum of the absolute coefficients. The Lasso regression method can be written as follows:
+$$
+\min_{\beta} \frac{1}{2n} \sum_{i=1}^{n} (y_i - \beta_0 - \sum_{j=1}^{p} x_{ij}\beta_j)^2 + \lambda \sum_{j=1}^{p} |\beta_j|,
+$$
+where $\beta_0$ is the intercept, $x_{ij}$ is the $i$th observation of the $j$th predictor, $y_i$ is the $i$th observation of the response variable, $\beta_j$ is the coefficient estimate for the $j$th predictor, $p$ is the number of predictors, and $\lambda$ is the penalty parameter that controls the amount of shrinkage. 
+
+When the design matrix $\boldsymbol{X}$ of a linear regression model is orthonormal, the Lasso regression method simplifies to:
+$$
+\min_{\beta} \frac{1}{2n} \sum_{i=1}^{n} (y_i - \beta_0 - \sum_{j=1}^{p} x_{ij}\beta_j)^2 + \lambda \sum_{j=1}^{p} |\beta_j|.
+$$
+The solution to this optimization problem is given by the Lasso equation with penalty $\lambda$:
+$$
+\operatorname{sign}\left(\hat{\beta}_j\right)\left(\left|\hat{\beta}_j\right|-\lambda\right)_{+} ,
+$$
+where $\hat{\beta}_j$ is the ordinary least squares estimate for the $j$th predictor. 
+
+To prove that this is the case, we need to show that the Lasso equation with penalty $\lambda$ is equivalent to the solution of the Lasso optimization problem when the design matrix $\boldsymbol{X}$ is orthonormal. 
+
+First, we note that the L1-norm penalty term in the Lasso optimization problem is equivalent to the sum of the absolute values of the coefficients:
+$$
+\sum_{j=1}^{p} |\beta_j| = \sum_{j=1}^{p} \sqrt{\beta_j^2}.
+$$
+Since the design matrix $\boldsymbol{X}$ is orthonormal, we have that $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$, which implies that the columns of $\boldsymbol{X}$ are orthonormal. Therefore, we can write the ordinary least squares estimate for the $j$th predictor as:
+$$
+\hat{\beta}_j = \boldsymbol{X}_j^{\top} \boldsymbol{y},
+$$
+where $\boldsymbol{X}_j$ is the $j$th column of $\boldsymbol{X}$ and $\boldsymbol{y}$ is the response variable. 
+
+Using this expression for $\hat{\beta}_j$, we can rewrite the Lasso equation with penalty $\lambda$ as:
+$$
+\operatorname{sign}\left(\boldsymbol{X}_j^{\top} \boldsymbol{y}\right)\left(\left|\boldsymbol{X}_j^{\top} \boldsymbol{y}\right|-\lambda\right)_{+} .
+$$
+We can see that this expression is equivalent to the solution of the Lasso optimization problem when the design matrix $\boldsymbol{X}$ is orthonormal. Therefore, we have shown that in case the design matrix $\boldsymbol{X}$ of a linear regression model is orthonormal, the estimators of $\beta_j$ are given by the Lasso equation with penalty $\lambda$:
+$$
+\operatorname{sign}\left(\hat{\beta}_j\right)\left(\left|\hat{\beta}_j\right|-\lambda\right)_{+} .
+$$
