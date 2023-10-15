@@ -1,0 +1,99 @@
+# 4
+
+The pmf in the Poisson regression model is given by:
+$$P(Y_i = y_i | \mu_i) = \frac{e^{-\mu_i} \mu_i^{y_i}}{y_i!},$$
+where $\mu_i$ is the expected value of $Y_i$. Using the log-link function $g(\mu_i) = \log(\mu_i)$, we have:
+$$\log(\mu_i) = \beta_0 + \beta_1 x_i$$
+Therefore we get:
+$$\mu_i=e^{\beta_0 + \beta_1 x_i}$$
+So we get for the fitted means for group A $(x_i=1)$ and group B $(x_i=0)$:
+$$\hat{\mu}_A=e^{\beta_0 + \beta_1}, \quad \hat{\mu}_B=e^{\beta_0}$$
+Now lets look at the likelihood for the Poisson regression, which is given by:
+$$L(\beta_0, \beta_1; \boldsymbol{y}, \boldsymbol{X}) = \prod_{i=1}^{n} \frac{e^{-e^{\beta_0 + \beta_1 x_i}} (e^{\beta_0 + \beta_1 x_i})^{y_i}}{y_i!}$$
+Therefore the log-likelihood is:
+$$\ell(\beta_0, \beta_1) = \sum_{i=1}^{n} \left(y_i (\beta_0 + \beta_1 x_i) - e^{\beta_0 + \beta_1 x_i} - \log(y_i!)\right)$$
+To find the maximum likelihood estimates, we need to solve the score equations:
+
+$$\frac{\partial \ell(\beta_0, \beta_1)}{\partial \beta_0} = 0, \quad \frac{\partial \ell(\beta_0, \beta_1)}{\partial \beta_1} = 0.$$
+Derivative with respect to $\beta_0$:
+$$\frac{\partial \ell(\beta_0, \beta_1)}{\partial \beta_0} = \sum_{i=1}^{n} \left(y_i - e^{\beta_0 + \beta_1 x_i}\right) = 0$$
+Solving this leads to:
+$$\sum_{i=1}^{n_A} \left(y_i - e^{\beta_0 + \beta_1}\right) + \sum_{i=n_A+1}^{n_A+n_B} \left(y_i - e^{\beta_0}\right) = 0$$
+$$\Leftrightarrow \sum_{i=1}^{n_A} \left(y_i \right) + \sum_{i=n_A+1}^{n_A+n_B} \left(y_i \right) - n_A e^{\beta_0 + \beta_1} - (n_A + n_B - n_A) e^{\beta_0} = 0$$
+$$\Leftrightarrow \sum_{i=1}^{n_A} \left(y_i \right) + \sum_{i=n_A+1}^{n_A+n_B} \left(y_i \right) - n_A e^{\beta_0 + \beta_1} - n_B e^{\beta_0} = 0$$
+The sample means of group A and group B are:
+$$\bar{y}_A=\frac{1}{n_A}\sum_{i=1}^{n_A} \left(y_i \right), \quad \bar{y}_B=\frac{1}{n_B}\sum_{i=n_A+1}^{n_A+n_B} \left(y_i \right)$$
+Therefore we get:
+$$n_A \bar{y}_A + n_B \bar{y}_B - n_A e^{\beta_0 + \beta_1} - n_B e^{\beta_0} = 0 \quad \text{(1)}$$
+
+Next we look at the derivative with respect to $\beta_1$:
+$$\frac{\partial \ell(\beta_0, \beta_1)}{\partial \beta_1} = \sum_{i=1}^{n} \left(y_i x_i - x_i e^{\beta_0 + \beta_1 x_i}\right) = 0$$
+Solving this we get:
+$$\sum_{i=1}^{n_A} \left(y_i -  e^{\beta_0 + \beta_1}\right) = 0$$
+$$\Leftrightarrow \quad \sum_{i=1}^{n_A} (y_i) -  n_A e^{\beta_0 + \beta_1} = 0$$
+$$\Leftrightarrow \quad n_A \bar{y}_A -  n_A e^{\beta_0 + \beta_1} = 0$$
+$$\Leftrightarrow \quad \bar{y}_A = e^{\beta_0 + \beta_1}$$
+Plugging that into $(1)$ we get:
+$$n_A \bar{y}_A + n_B \bar{y}_B - n_A e^{\beta_0 + \beta_1} - n_B e^{\beta_0} = 0$$
+$$\Leftrightarrow \quad n_A e^{\beta_0 + \beta_1} + n_B \bar{y}_B - n_A e^{\beta_0 + \beta_1} - n_B e^{\beta_0} = 0$$
+$$\Leftrightarrow \quad \bar{y}_B = e^{\beta_0}$$
+Thus we have shown that:
+$$\hat{\mu}_A = e^{\beta_0 + \beta_1} = \bar{y}_A, \quad \hat{\mu}_B = e^{\beta_0} = \bar{y}_B$$
+Therefore, the fitted means $\hat{\mu}_A$ and $\hat{\mu}_B$ equal the sample means.
+
+
+# 5
+## a
+
+Assume $Y\sim Bin(T,\pi)$. The pmf is given by:
+$$P(X = y) = \binom{T}{y} \pi^y (1-\pi)^{T-y}$$
+If we now take the logarithm and then the exponential again we get:
+$$=\exp\left\{y\log\left(\pi\right)+(T-y)\log(1-\pi)+\log\binom{T}{y}\right\}$$
+$$=\exp\left\{y\log\left(\frac{\pi}{1-\pi}\right)+T\log(1-\pi)+\log\binom{T}{y}\right\}$$
+Therefore we have that:
+$$\theta = \log\left(\frac{\pi}{1-\pi}\right) \quad \Leftrightarrow \quad e^\theta=\frac{\pi}{1-\pi}$$
+$$\Leftrightarrow \quad e^\theta(1-\pi)=\pi \quad \Leftrightarrow \quad e^\theta=\pi(1+e^\theta)$$
+$$\Leftrightarrow \quad \pi=\frac{e^\theta}{1+e^\theta} \quad \implies \quad 1-\pi=\frac{1+e^\theta-e^\theta}{1+e^\theta}=(1+e^\theta)^{-1}$$
+Plugging this into the pmf we have:
+$$\exp\left\{y\log\left(\frac{\pi}{1-\pi}\right)+T\log(1-\pi)+\log\binom{T}{y}\right\}$$
+$$=\exp\left\{y\log\left(\frac{\pi}{1-\pi}\right)+T\log((1+e^\theta)^{-1})+\log\binom{T}{y}\right\}$$
+$$=\exp\left\{y\log\left(\frac{\pi}{1-\pi}\right)-T\log(1+e^\theta)+\log\binom{T}{y}\right\}$$
+Therefore we get:
+$$\theta = \log\left(\frac{\pi}{1-\pi}\right), \quad b(\theta) = T\log(1+e^\theta), \quad a(\phi) = 1, \quad \phi = 1, \quad c(y,\phi)=\log\binom{T}{y}$$
+Therefore it can be written as a univariate exponential dispersion family.
+
+
+## b
+
+We have that the logit link is $logit(p)=\log\frac{p}{1-p}$. With the logit-link we regress the logit of $p$ on the explanatory variables. For example for a linear regression with one explanatory variable we have:
+$$logit(p)=\log\frac{p}{1-p}=\beta_0+\beta_1x$$
+If we want to calculate $p$ from that, we get that 
+$$p=\frac{e^{logit(p)}}{1+e^{logit(p)}}=\frac{1}{1+e^{-logit(p)}}$$
+
+The likelihood of of the binomial regression model with $y_i$ successes out of $T_i$ trials is the product of the individual probabilities:
+$$L=\prod_{i=1}^T\binom{T_i}{y_i}p_i^{y_i}(1-p_i)^{T_i-y_i}$$
+To get the log-likelihood we just take the logarithm:
+$$\ell=\log(L)=\sum_{i=1}^T\left(\log\binom{T_i}{y_i}+y_i\log(p_i)+(T_i-y_i)\log(1-p_i)\right)$$
+Now plugging in the exponent form for the $p_i$:
+$$=\sum_{i=1}^T\left(\log\binom{T_i}{y_i}+y_i\log(\frac{1}{1+e^{-\beta^T x_i}})+(T_i-y_i)\log(1-\frac{1}{1+e^{-\beta^T x_i}})\right)$$
+$$=\sum_{i=1}^T\left(\log\binom{T_i}{y_i}+y_i\log(\frac{1}{1+e^{-\beta^T x_i}})+(T_i-y_i)\log(\frac{e^{-\beta^T x_i}}{1+e^{-\beta^T x_i}})\right)$$
+$$=\sum_{i=1}^T\left(\log\binom{T_i}{y_i}+y_i\left[ \log(\frac{1}{1+e^{-\beta^T x_i}})-\log(\frac{e^{-\beta^T x_i}}{1+e^{-\beta^T x_i}})\right]+T_i \log(\frac{e^{-\beta^T x_i}}{1+e^{-\beta^T x_i}})\right)$$
+$$=\sum_{i=1}^T\left(\log\binom{T_i}{y_i}+y_i\log(e^{\beta^T x_i})+T_i \log(\frac{1}{1+e^{\beta^T x_i}})\right)$$
+$$=\sum_{i=1}^T\left(\log\binom{T_i}{y_i}+y_i\beta^T x_i-T_i \log(1+e^{\beta^T x_i})\right)$$
+
+## c
+
+
+For the score function we derive the log-likelihood function wrt. $\beta$:
+$$\nabla_\beta \ell=\nabla_\beta \sum_{i=1}^T\left(\log\binom{T_i}{y_i}+y_i\beta^T x_i-T_i \log(1+e^{\beta^T x_i})\right)$$
+$$ =\sum_{i=1}^T \nabla_\beta \left(\log\binom{T_i}{y_i}+y_i\beta^T x_i-T_i \log(1+e^{\beta^T x_i})\right)$$
+$$ =\sum_{i=1}^T \nabla_\beta (y_i\beta^T x_i)-\nabla_\beta(T_i \log(1+e^{\beta^T x_i}))$$
+$$ =\sum_{i=1}^T y_ix_i-T_i \frac{e^{\beta^T x_i}}{1+e^{\beta^T x_i}}x_i$$
+$$ =\sum_{i=1}^T y_ix_i-T_i \frac{1}{1+e^{-\beta^T x_i}}x_i$$
+Plugging back in the probability:
+$$ =\sum_{i=1}^T y_ix_i-T_i p_ix_i$$
+$$ =\sum_{i=1}^T (y_i-T_i p_i)x_i$$
+Therefore:
+$$s(\beta)=\sum_{i=1}^T (y_i-T_i p_i)x_i$$
+where $p_i=\frac{1}{1+e^{-\beta^T x_i}}$
+
