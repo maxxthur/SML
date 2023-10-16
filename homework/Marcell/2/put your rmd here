@@ -34,7 +34,7 @@ $$
 
 5. Since $\boldsymbol{X}^{\top} \boldsymbol{X} = \boldsymbol{I}$, it follows that $\boldsymbol{X}^{\top} = \boldsymbol{X}^{-1}$.
 
-6. With this understanding, simplify the equation for $\hat{\beta}_j:
+6. With this understanding, simplify the equation for $\hat{\beta}_j$:
 
 $$
 \hat{\beta_j} = \boldsymbol{e}_j^{\top} Y - \sum_{k \neq j} \boldsymbol{e}_j^{\top} \boldsymbol{X}_k^{\top} Y.
@@ -48,13 +48,17 @@ $$
 \hat{\beta}_j = \boldsymbol{e}_j^{\top} Y.
 $$
 
-9. Finally, express the estimator for $\beta_j$ in terms of the estimator for the best subset of size $M:
+9. Finally, express the estimator for $\beta_j$ in terms of the estimator for the best subset of size $M$:
 
 $$
 \hat{\beta}_j = \hat{\beta}_j I\left(\left|\hat{\beta}_j\right| \geq\left|\hat{\beta}_M\right|\right),
 $$
 
-where $I()$ denotes the indicator function, and $\hat{\beta}_j$ and $\hat{\beta}_M$ represent the OLS estimators for $\beta_j$ and the best subset of size $M$.
+where $I()$ denotes the indicator function, and $\hat{\beta}_j$ and $\hat{\beta}_M$ represent the OLS estimators for $\beta_j$ and the best subset of size $M$ .
+
+Additionally, we are aware that choosing the $M$ coefficients with the highest absolute values means we have the best subset in general.
+As a result, we may now employ the indicator function, which checks whether a coefficient's absolute value is $≥$ equal to that of the $H$-th longest coefficient and then for the $j$ -th coefficient we get the desired result. 
+
 
 (b) 
 
