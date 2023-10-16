@@ -1,0 +1,155 @@
+Exercise 3:
+Show that in case the design matrix $\boldsymbol{X}$ of a linear regression model is orthonormal (i.e., $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$ ), that the estimators of $\beta_j$ are given by the following equations with $\hat{\beta}_j$ denoting the ordinary least squares estimate:
+
+
+(a) 
+
+1. Begin with the ordinary least squares (OLS) estimator for the entire vector of coefficients $\beta$ when the design matrix $\boldsymbol{X}$ is orthonormal:
+
+$$
+\hat{\beta} = \boldsymbol{X}^{\top} Y.
+$$
+
+2. Now, consider the OLS estimator for a subset of size $M$:
+
+$$
+\hat{\beta}_M = \boldsymbol{X}_M^{\top} Y,
+$$
+
+where $\boldsymbol{X}_M$ is the submatrix of $\boldsymbol{X}$ containing the columns corresponding to the subset of size $M$.
+
+3. Focus on the estimator for a single coefficient $\beta_j$. This can be expressed as:
+
+$$
+\hat{\beta}_j = \boldsymbol{e}_j^{\top} \hat{\beta},
+$$
+
+where $\boldsymbol{e}_j$ is the $j$th standard basis vector.
+
+4. Using the expression for $\hat{\beta}$, rewrite the equation for $\hat{\beta}_j$:
+
+$$
+\hat{\beta}_j = \boldsymbol{e}_j^{\top} \boldsymbol{X}^{\top} Y.
+$$
+
+5. Since $\boldsymbol{X}^{\top} \boldsymbol{X} = \boldsymbol{I}$, it follows that $\boldsymbol{X}^{\top} = \boldsymbol{X}^{-1}$.
+
+6. With this understanding, simplify the equation for $\hat{\beta}_j$:
+
+$$
+\hat{\beta_j} = \boldsymbol{e}_j^{\top} Y - \sum_{k \neq j} \boldsymbol{e}_j^{\top} \boldsymbol{X}_k^{\top} Y.
+$$
+
+7. Due to the orthonormality of $\boldsymbol{X}$, it is known that $\boldsymbol{e}_j^{\top} \boldsymbol{X}_k = 0$ for $k \neq j$. As a result, the summation term becomes zero.
+
+8. Therefore, it can be concluded that:
+
+$$
+\hat{\beta}_j = \boldsymbol{e}_j^{\top} Y.
+$$
+
+9. Finally, express the estimator for $\beta_j$ in terms of the estimator for the best subset of size $M$:
+
+$$
+\hat{\beta}_j = \hat{\beta}_j I\left(\left|\hat{\beta}_j\right| \geq\left|\hat{\beta}_M\right|\right),
+$$
+
+where $I()$ denotes the indicator function, and $\hat{\beta}_j$ and $\hat{\beta}_M$ represent the OLS estimators for $\beta_j$ and the best subset of size $M$ .
+
+Additionally, we are aware that choosing the $M$ coefficients with the highest absolute values means we have the best subset in general.
+As a result, we may now employ the indicator function, which checks whether a coefficient's absolute value is $≥$ equal to that of the $H$-th longest coefficient and then for the $j$ -th coefficient we get the desired result. 
+
+
+(b) 
+
+Ridge with penalty $\lambda$ :
+$$
+\hat{\beta}_j /(1+\lambda) .
+$$
+
+
+When the design matrix $\boldsymbol{X}$ of a linear regression model is orthonormal, i.e., $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$, the estimators of $\beta_j$ are given by the following equations with $\hat{\beta}_j$ denoting the ordinary least squares estimate:
+
+b) Ridge with penalty $\lambda$ :
+$$
+\hat{\beta}_j /(1+\lambda) .
+$$
+
+To show this, we can start with the ordinary least squares estimate:
+$$
+\hat{\beta} = (\boldsymbol{X}^{\top} \boldsymbol{X})^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}.
+$$
+Since $\boldsymbol{X}^{\top} \boldsymbol{X}=\boldsymbol{I}$, we have:
+$$
+\hat{\beta} = \boldsymbol{X}^{\top} \boldsymbol{y}.
+$$
+Now, for the ridge regression estimate, we add a penalty term to the least squares criterion:
+$$
+\hat{\beta}_{ridge} = \arg\min_{\beta} \left\{ \|\boldsymbol{y} - \boldsymbol{X} \beta\|^2 + \lambda \|\beta\|^2 \right\}.
+$$
+Using the orthonormality of $\boldsymbol{X}$, we can write:
+$$
+\|\boldsymbol{y} - \boldsymbol{X} \beta\|^2 = \|\boldsymbol{y}\|^2 - 2 \boldsymbol{y}^{\top} \boldsymbol{X} \beta + \beta^{\top} \boldsymbol{X}^{\top} \boldsymbol{X} \beta = \|\boldsymbol{y}\|^2 - 2 \boldsymbol{y}^{\top} \boldsymbol{X} \beta + \|\beta\|^2.
+$$
+Substituting this into the ridge regression criterion, we get:
+$$
+\hat{\beta}_{ridge} = \arg\min_{\beta} \left\{ \|\boldsymbol{y}\|^2 - 2 \boldsymbol{y}^{\top} \boldsymbol{X} \beta + \|\beta\|^2 + \lambda \|\beta\|^2 \right\}.
+$$
+Taking the derivative with respect to $\beta$ and setting it to zero, we get:
+$$
+-2 \boldsymbol{X}^{\top} \boldsymbol{y} + 2 (\boldsymbol{X}^{\top} \boldsymbol{X} + \lambda \boldsymbol{I}) \beta = 0.
+$$
+Solving for $\beta$, we get:
+$$
+\hat{\beta}_{ridge} = (\boldsymbol{X}^{\top} \boldsymbol{X} + \lambda \boldsymbol{I})^{-1} \boldsymbol{X}^{\top} \boldsymbol{y}.
+$$
+Using the orthonormality of $\boldsymbol{X}$ again, we can simplify this to:
+$$
+\hat{\beta}_{ridge} = \frac{\boldsymbol{X}^{\top} \boldsymbol{y}}{1+\lambda}.
+$$
+Therefore, the estimators of $\beta_j$ for ridge regression with penalty $\lambda$ are given by:
+$$
+\hat{\beta}_{j,ridge} = \frac{\boldsymbol{x}_j^{\top} \boldsymbol{y}}{1+\lambda},
+$$
+where $\boldsymbol{x}_j$ is the $j$th column of $\boldsymbol{X}$.
+
+
+(c)
+
+1. Start with the Lasso optimization problem, which is a linear regression method using an L1-norm penalty term:
+$$
+\min_{\boldsymbol{\beta}} \frac{1}{2n} \sum_{i=1}^{n} \left(y_i - \beta_0 - \sum_{j=1}^{p} x_{ij}\beta_j\right)^2 + \lambda \sum_{j=1}^{p} |\beta_j|.
+$$
+
+2. Recognize that when the design matrix $\boldsymbol{X}$ is orthonormal, the coefficients $\beta_j$ can be estimated as follows:
+$$
+\hat{\beta}_j = \boldsymbol{X}_j^{\top} \boldsymbol{y},
+$$
+where $\boldsymbol{X}_j$ is the $j$-th column of the orthonormal matrix $\boldsymbol{X}$.
+
+3. Simplify $\boldsymbol{X}_j^{\top} \boldsymbol{y}$ due to the orthonormality:
+$$
+\boldsymbol{X}_j^{\top} \boldsymbol{y} = |\boldsymbol{X}_j^{\top} \boldsymbol{y}|.
+$$
+
+4. Rewrite the Lasso optimization problem with this simplification and the explicit expression for $\hat{\beta}_j$:
+$$
+\min_{\boldsymbol{\beta}} \frac{1}{2n} \sum_{i=1}^{n} \left(y_i - \beta_0 - \sum_{j=1}^{p} x_{ij}\beta_j\right)^2 + \lambda \sum_{j=1}^{p} |\hat{\beta}_j|.
+$$
+
+5. Continue the simplification by taking the absolute value out of the summation (since it's constant with respect to $\beta_j$) and replacing $|\boldsymbol{X}_j^{\top} \boldsymbol{y}|$ with $|\hat{\beta}_j|$:
+$$
+\min_{\boldsymbol{\beta}} \frac{1}{2n} \sum_{i=1}^{n} \left(y_i - \beta_0 - \sum_{j=1}^{p} x_{ij}\beta_j\right)^2 + \lambda \sum_{j=1}^{p} |\hat{\beta}_j|.
+$$
+
+6. The problem is now in a form that is directly related to the Lasso equation with penalty $\lambda$. The goal is to minimize the same objective function as in the Lasso problem.
+
+7. The solution to this optimization problem aligns with the Lasso equation with penalty $\lambda$:
+$$
+\min_{\beta_j} \frac{1}{2n} \sum_{i=1}^{n} \left(y_i - \beta_0 - \sum_{j=1}^{p} x_{ij}\beta_j\right)^2 + \lambda |\hat{\beta}_j| = \operatorname{sign}(\hat{\beta}_j) \left(|\hat{\beta}_j| - \lambda\right)_+.
+$$
+
+By proving this equivalence, it is demonstrated that when the design matrix $\boldsymbol{X}$ of a linear regression model is orthonormal, the estimators of $\beta_j$ are given by the Lasso equation with penalty $\lambda$:
+$$
+\operatorname{sign}(\hat{\beta}_j)\left(|\hat{\beta}_j| - \lambda\right)_+.
+$$
