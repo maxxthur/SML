@@ -1,0 +1,202 @@
+---
+title: "hw2_sml"
+author: "Group2"
+date: "2023-10-11"
+output: pdf_document
+---
+
+
+## Exercise 1
+
+We start by focusing on the ridge expression. In the first part we want to center the response and the regressors: 
+
+$$
+\begin{aligned}
+&\sum^N_{i = 1} \left(y_i - \beta_0 - \sum^{p}_{j = 1} (x_{ij} - \overline x_j) \beta_j \right) = \\
+&\sum^N_{i = 1} \left(y_i - \overline{y} - \beta_0 - \sum^p_{j = 1} \overline{x_j}\beta_j - \sum^{p}_{j = 1} (x_{ij} - \overline x_j) \beta_j \right) = \\
+&\sum^N_{i = 1} \left(y_i - \beta_0^c - \sum^{p}_{j = 1} (x_{ij} - \overline x_j) \beta_j^c \right).
+\end{aligned}
+$$
+
+Hence, we have that:
+
+$$
+\begin{aligned}
+&\beta_0^c = \beta_0 + \sum^p_{j = 1} \overline{x_j}\beta_j - \overline{y}\\
+&\beta_j^c =  \beta_j \;\; j = 1, 2, \dots, p
+\end{aligned}
+$$
+
+As a final remark, this centering procedure consist in shifting all the variables $x_j$ and the response $y$ to have mean zero. As a result, only $\beta_0^c$ which is the intercept, is going to change to be equal to 0, whereas the slope of the regression line $\beta_j^c$ remain the same. 
+
+## Exercise 9
+
+In this exercise, we delve deeper into common problems we might encounter when fitting a logistic regression model for the prediction of categorical data. The problem mentioned here consists of Complete or Quasi-Complete Separation, where the issue is not really connected to the model correctness or specification itself, but it is mainly due to "thin" data. This can be seen, e.g., in connection with really skewed distribution in the response variable. In our case, we observe that, fortunately, only in 20% of the reported cases the patient dies, for a sample size of 200. This is of course more relevant when also some categorical variables levels are not as frequent.
+
+```{r, include = FALSE}
+############################
+## Exercise 9: Log
+############################
+
+if(!require(aplore3)) { install.packages("aplore3"); library(aplore3) }
+if(!require(Hmisc)) { install.packages("Hmisc"); library(Hmisc) }
+if(!require(ggplot2)) { install.packages("ggplot2"); library(ggplot2) }
+if(!require(dplyr)) { install.packages("Hmisc"); library(dplyr) }
+if(!require(stats)) { install.packages("stats"); library(stats) }
+if(!require(lmtest)) { install.packages("lmtest"); library(lmtest) }
+```
+
+### Point A
+
+```{r, warning = FALSE}
+################################################################
+## A -  Fit a logistic regression model with all regressors
+################################################################
+## A.1 Short exploratory Data Analysis
+
+# Dataframe
+df <- icu
+
+# Variables classes
+#unlist(lapply(df, class))
+
+# NAs
+#unlist(lapply(df, function(x) sum(is.na(x))))
+
+# Change variables of interest into numeric, binarize variables
+df <- within(df, 
+             {
+               # Response variable
+               sta <- ifelse(sta == "Died", 1, 0)
+               loc_bin <- ifelse(loc == "Nothing", 0, 1)
+               race_bin <- ifelse(race == "White", 1, 0)
+             })
+
+## A.2 Model Fitting and summary. Note locComa and Stupor are both negative, 
+## but might have same pred power.
+
+
+m1 <- glm(sta ~., family = binomial(link = "logit"), data = df[, 2:(length(df)-2)])
+coef <- m1$coefficients
+```
+
+After running the logistic regression on all the variables we encounter the warning about fitted probabilities being numerically 0 or 1, which is a first sign of \textbf{separation}. To graphically illustrate the issue, we can look into the data with a grid plot, taking into account the loc, age and race variables. It is clear that issues of quasi-complete separation occur here, or complete separation if we had taken into account interaction terms. In the graph, the 0 and 1 binary classification reports the binarized loc variable, where 1 stands for the patient having Stupor or Coma reported.
+
+```{r, echo = FALSE, out.height = "97%",  out.width = "97%"}
+# Short summary statistic
+ggplot(df,
+       aes(x = age , y = sta, shape = type)) + 
+  geom_point() + facet_grid(loc_bin ~ race) +
+  xlab ( "Age"  ) + ylab (  "Status"  ) +
+  scale_y_continuous(breaks = c(0, .5, 1)) +
+  theme_bw() + 
+  theme(axis.line = element_line(colour = "black"))
+```
+```{r, echo =FALSE, out.height = "97%", out.width = "97%"}
+# Scatterplot matrix
+pairs(df[, c(3, 5, 6, 11, 12, 14, 21)], col = ifelse(df$sta == 1, "tomato3", "steelblue"))
+```
+
+In the summary we  that the coefficients for locStupor, Black race, Emergency and other regressors are huge, indicating the maximum likelihood estimates do not exist. We can also notice the standard errors of these coefficients to be particularly big in magnitude.
+
+```{r, echo = FALSE}
+## First results, assessing which coefficients are greater in magnitude
+summary(m1)
+sort(abs(coef), decreasing = T)
+```
+
+### Point B
+
+So, as we observed in the previous point, we can absolutely make a case for a quasi-complete separation problem. Therefore, we start by pooling stratified variable levels into fewer ones. 
+
+```{r, echo = FALSE}
+################################################################
+## B -  Assess complete and quasi-complete separation problem
+################################################################
+
+unlist(lapply(df, function(x) if(is.factor(x)) levels(x)))
+```
+
+From the listing above we see that only two factors, namely \textbf{race} and \textbf{loc} have more than 2 levels, which were already binarized in the beginning. By refitting the full model, we see that pooling the levels together improves the estimation of the coefficients. At this point, one could turn some of the categorical variables into continuous variables (1), or select a subset of the independent variables (2). The second option will introduce bias ,of course, but this seems to be the only available solution given the fact that we do not have the "original" measures for the syntetic categorical variables. We also note that with interaction terms, this problem would be even more accentuated, and we would not be able to determine whether such interactions would be relevant given the complete separation problem.
+
+```{r, echo = FALSE}
+################################################################
+## B -  Assess complete and quasi-complete separation problem
+################################################################
+df2 <- df[, !(colnames(df) %in% c("loc", "race"))]
+m2 <- glm(sta ~., family = binomial(link = "logit"), data = df2[, 2:length(df2)])
+summary(m2)
+```
+
+### Point D
+
+Now we want to improve the base model and the separation problem by selecting a subset of regressors using stepwise procedures based on AIC and BIC. We fit backward stepwise model selection. 
+
+The first based on AIC gives out:
+$$
+\begin{aligned}
+&sta \; \sim \; age \; + \; can \; + \; sys \; + \; type \; + \; ph \; + \; pco \; + \; loc_bin\\
+& AIC = 144.4
+\end{aligned}
+$$
+
+
+For the backward stepwise model selection absed on BIC, we have:
+
+$$
+\begin{aligned}
+&sta \; \sim \; age \; + \; can \; + \;  type \; + \; loc_bin\\
+& AIC = 165.63
+\end{aligned}
+$$
+
+```{r, results = FALSE}
+s1_AIC<- step(m2, direction = "backward", k = 2)
+n <- dim(df2)[1]
+s1_BIC <- step(m2, direction = "backward", k = log(n))
+```
+
+### Point E
+
+Now that we have obtained our models, we want to compare the full model with the stepwise selected models by benchmarking their log-likelihoods ant the in-sample misclassification.
+
+```{r}
+
+boundary <- function(prob_vec, actual_vec){
+  boundary_vec <- seq(0.01, 1, 0.01)
+  
+  mis_tmp <- 1
+  for(i in boundary_vec){
+    
+    pred_tmp <- ifelse(prob_vec > i, 1, 0)
+    mis_tmp <- ifelse(mean(pred_tmp != actual_vec) < mis_tmp, mean(pred_tmp != actual_vec), mis_tmp)
+  
+  }
+  
+  
+}
+pred_AIC <- ifelse(s1_AIC$fitted.values > 0.5, 1, 0)
+pred_BIC <- ifelse(s1_BIC$fitted.values > 0.5, 1, 0)
+pred_full <- ifelse(m2$fitted.values > 0.5, 1, 0)
+
+## Misclassification errors
+mis_AIC <- mean(pred_AIC != df2$sta)
+mis_BIC <- mean(pred_BIC != df2$sta)
+mis_FULL <- mean(pred_full != df2$sta)
+results_mis <- c(mis_AIC, mis_BIC, mis_FULL)
+
+## Loglikelihoods
+lik_AIC <- logLik(s1_AIC)
+lik_BIC <- logLik(s1_BIC)
+lik_FULL <- logLik(m2)
+results_lik <- c(lik_AIC, lik_BIC, lik_FULL)
+
+## Matrix
+vec <- c(results_mis, results_lik)
+result_mat <- matrix(vec, ncol = 3, byrow = T)
+rownames(result_mat) <- c("Misclassification", "Log-Lik")
+colnames(result_mat) <- c("AIC", "BIC", "FULL")
+result_mat
+```
+
+From these results, we can see that the full model performs better in both metrics. However we need to keep in mind that this is only true in-sample, and a thorough analysis should be carried out also out-of-sample in such cases. This is also expected, since by eliminating covariates, we increase bias to reduce possible variance out-of-sample.
