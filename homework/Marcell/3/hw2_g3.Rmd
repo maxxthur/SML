@@ -28,3 +28,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Task 9
 
 ## Task 10
+
+```{r}
+# As ElemStatLearn is not in CRAN anymore we must download the latest archived 
+# version and install it from our harddrive
+if(require("ElemStatLearn") == F) install.packages("ElemStatLearn_2015.6.26.1.tar.gz", repos = NULL)
+```
+
