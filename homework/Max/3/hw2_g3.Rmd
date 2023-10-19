@@ -5,13 +5,27 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggthemes)
 ```
+
+
 
 ## Task 1
 
 ## Task 2
+
+```{r}
+x <- rnorm(40, mean = 0, sd = 1)
+x2 <- x^2
+noise <- rnorm(40, mean = 0, sd = 1)
+y <- x + x2 + noise
+
+summary(lm(y ~ x + x2))
+```
+
 
 ## Task 3
 
@@ -20,6 +34,84 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Task 5
 
 ## Task 6
+
+```{r}
+# a)
+# data 
+set.seed(1)
+x <- rnorm(100)
+y <- x - 2*x^2 + rnorm(100)
+```
+
+```{r}
+# assuming you dont mean orthogonal polynomials we set up a data.frame with all the polynomials inside
+dat <- data.frame(y = y, x = x, x2 = x^2, x3 = x^3, x4 = x^4)
+
+# b)
+# we then create a scatterplot and we dare to use # ggplots in built loess implementation to draw a curve that fits the data as best as possible
+
+dat %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = F) +
+  theme_base()
+  
+```
+
+
+```{r}
+# fit the models
+fits <- lapply(2:5, function(i) {
+  lm(data = dat[, 1:i], y ~ .)
+})
+
+# calculate AIC stepwise
+# A get number of coefficients + 1 (we estimate the variance in addition)
+K <- unlist(lapply(fits, function(f) length(f$coef))) + 1
+
+# get the LogLikelihood of the models
+LL <- unlist(lapply(fits, logLik))
+
+# AIC
+AIC <- 2*K - 2*LL
+AIC
+
+# print model summary with for lowest AIC
+summary(fits[[which.min(AIC)]])
+
+```
+
+```{r}
+# d)
+
+# get fitted values from models in c
+pred_c <- lapply(fits, function(f) f$fitted) 
+
+# get residual standard deviation
+sigma_c <- lapply(fits, function(f) summary(f)$sigma) 
+
+# create 100 test data sets
+new_y <- lapply(1:100, function(i) {
+  y <- x - 2*x^2 + rnorm(100)
+  y
+})
+
+# now the assumption is that errors in linear regression are gaussian hence 
+# the likelihood must be that of a gaussian distribution
+
+# try first for the best model: 
+Err <- rep(NA, 4)
+for(i in 1:length(pred_c)) {
+LL <- lapply(new_y, function(ny) {
+  sum(log(dnorm(x = ny, mean = pred_c[[i]], sd = sigma_c[[i]])))
+})
+Err[i] <- -2 * mean(unlist(LL))
+}
+
+# print results
+Err
+```
+
 
 ## Task 7
 
