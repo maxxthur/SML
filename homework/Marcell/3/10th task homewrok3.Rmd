@@ -1,0 +1,462 @@
+---
+title: "Assignment 3"
+author: "Group 2"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## Task 10
+
+
+
+
+```{r}
+# Load the ElemStatLearn package
+library(ElemStatLearn)
+
+# Load the phoneme dataset
+data(phoneme)
+```
+
+
+## a) part 
+```{r}
+# Filter the dataset to include only "aa" and "ao" classes
+subset_phoneme <- phoneme[phoneme$g %in% c("aa", "ao"), ]
+
+# Create a line plot
+plot_data <- subset_phoneme[, 1:256]  # Select the covariate columns
+plot_data <- cbind(Class = subset_phoneme$g, plot_data)
+
+# Load the ggplot2 library for data visualization
+library(ggplot2)
+
+# Reshape the data for plotting
+plot_data <- reshape2::melt(plot_data, id.vars = "Class")
+
+# Create a line plot 
+ggplot(plot_data, aes(x = variable, y = value, color = Class)) +
+  geom_line() +
+  labs(title = "Covariate Values for 'aa' and 'ao' Classes",
+       x = "Index", y = "Covariate Values") +
+  scale_color_manual(values = c("aa" = "blue", "ao" = "red")) +
+  theme_minimal()
+```
+
+
+## b) part
+```{r}
+# Set a random seed for reproducibility
+set.seed(123)
+
+# Sample 1000 indices for training data
+training_indices <- sample(1:nrow(subset_phoneme), 1000)
+
+# Create the training and test datasets
+training_data <- subset_phoneme[training_indices, ]
+test_data <- subset_phoneme[-training_indices, ]
+
+# Verify the dimensions of the training and test datasets
+dim(training_data)
+dim(test_data)
+```
+
+## aa part
+
+
+# c part
+
+```{r}
+# Load the necessary library for logistic regression
+library(glmnet)
+
+# Define the response variable for training and test data
+response_variable_train <- as.factor(training_data$g %in% c("aa"))
+response_variable_test <- as.factor(test_data$g %in% c("aa"))
+
+# Define the covariates for training and test data
+covariates_train <- as.matrix(training_data[, 1:256])
+covariates_test <- as.matrix(test_data[, 1:256])
+
+# Fit the logistic regression model to the training data
+logistic_model <- glmnet(covariates_train, response_variable_train, family = "binomial")
+
+# Make predictions on the training data
+training_predictions <- predict(logistic_model, s = 0.01, newx = covariates_train, type = "response")
+
+# Convert the predicted probabilities to binary class predictions
+predicted_classes_train <- ifelse(training_predictions > 0.5, "aa", "ao")
+
+# Calculate misclassification rate on the training data
+training_misclassification_rate <- mean(predicted_classes_train != training_data$g)
+
+# Calculate the log-likelihood value on the training data
+log_likelihood_training <- sum(log(ifelse(response_variable_train == 1, training_predictions, 1 - training_predictions)))
+
+# Make predictions on the test data
+test_predictions <- predict(logistic_model, s = 0.01, newx = covariates_test, type = "response")
+
+# Convert the predicted probabilities to binary class predictions for the test data
+predicted_classes_test <- ifelse(test_predictions > 0.5, "aa", "ao")
+
+# Calculate misclassification rate on the test data
+test_misclassification_rate <- mean(predicted_classes_test != test_data$g)
+
+# Calculate the log-likelihood value on the test data
+log_likelihood_test<-sum(log(ifelse(response_variable_test == 1, test_predictions, 1 - test_predictions)))
+
+# Display the results
+cat("Misclassification Rate on Training Data:", training_misclassification_rate, "\n")
+cat("Log-Likelihood on Training Data:", log_likelihood_training, "\n")
+cat("Misclassification Rate on Test Data:", test_misclassification_rate, "\n")
+cat("Log-Likelihood on Test Data:", log_likelihood_test, "\n")
+
+
+```
+
+
+# d) part
+
+```{r}
+# Load the necessary libraries
+library(glmnet)
+library(splines)
+
+# Define the response variable for training and test data
+response_variable_train_aa <- as.factor(training_data$g == "aa")
+response_variable_test_aa <- as.factor(test_data$g == "aa")
+
+# Define the covariates for training and test data
+covariates_train <- as.matrix(training_data[, 1:256])
+covariates_test <- as.matrix(test_data[, 1:256])
+
+# Create a 12-dimensional model matrix X∗ based on natural cubic splines
+H <- ns(1:256, df = 12)
+covariates_train_ns <- covariates_train %*% H
+covariates_test_ns <- covariates_test %*% H
+
+# Fit the logistic regression model to the training data
+logistic_model_aa <- glmnet(covariates_train_ns, response_variable_train_aa, family = "binomial")
+
+# Make predictions on the training data
+training_predictions_aa <- predict(logistic_model_aa, s = 0.01, newx = covariates_train_ns, type = "response")
+
+# Convert the predicted probabilities to binary class predictions
+predicted_classes_train_aa <- ifelse(training_predictions_aa > 0.5, "aa", "ao")
+
+# Calculate misclassification rate on the training data
+training_misclassification_rate_aa <- mean(predicted_classes_train_aa != "aa")
+
+# Calculate the log-likelihood value on the training data
+log_likelihood_training_aa <- sum(log(ifelse(response_variable_train_aa == 1, training_predictions_aa, 1 - training_predictions_aa)))
+
+# Make predictions on the test data
+test_predictions_aa <- predict(logistic_model_aa, s = 0.01, newx = covariates_test_ns, type = "response")
+
+# Convert the predicted probabilities to binary class predictions for the test data
+predicted_classes_test_aa <- ifelse(test_predictions_aa > 0.5, "aa", "ao")
+
+# Calculate misclassification rate on the test data
+test_misclassification_rate_aa <- mean(predicted_classes_test_aa != "aa")
+
+# Calculate the log-likelihood value on the test data
+log_likelihood_test_aa<-sum(log(ifelse(response_variable_test_aa == 1, test_predictions_aa, 1 - test_predictions_aa)))
+
+# Display the results
+cat("Misclassification Rate on Training Data for 'aa' class:", training_misclassification_rate_aa, "\n")
+cat("Log-Likelihood on Training Data for 'aa' class:", log_likelihood_training_aa, "\n")
+cat("Misclassification Rate on Test Data for 'aa' class:", test_misclassification_rate_aa, "\n")
+cat("Log-Likelihood on Test Data for 'aa' class:", log_likelihood_test_aa, "\n")
+
+```
+
+
+# e) part
+
+```{r}
+# Load the necessary libraries
+library(glmnet)
+library(splines)
+
+# Define the response variable for training and test data
+response_variable_train_aa <- as.factor(training_data$g == "aa")
+response_variable_test_aa <- as.factor(test_data$g == "aa")
+
+# Define the covariates for training and test data
+covariates_train <- as.matrix(training_data[, 1:256])
+covariates_test <- as.matrix(test_data[, 1:256])
+
+# Initialize vectors to store results
+misclassification_rates <- numeric()
+log_likelihood_means <- numeric()
+aic_values <- numeric()
+
+# Loop through different degrees of freedom
+for(df in 1:8) {
+  # Create a model matrix X∗ based on natural cubic splines with varying degrees of freedom
+  H <- ns(1:256, df = 2^df)
+  covariates_train_ns <- covariates_train %*% H
+  covariates_test_ns <- covariates_test %*% H
+  
+  # Fit the logistic regression model to the training data
+  logistic_model_aa <- glmnet(covariates_train_ns, response_variable_train_aa, family = "binomial")
+  
+  # Make predictions on the training data
+  training_predictions_aa <- predict(logistic_model_aa, s = 0.01, newx = covariates_train_ns, type = "response")
+  
+  # Convert the predicted probabilities to binary class predictions
+  predicted_classes_train_aa <- ifelse(training_predictions_aa > 0.5, "aa", "ao")
+  
+  # Calculate misclassification rate on the training data
+  training_misclassification_rate_aa <- mean(predicted_classes_train_aa != "aa")
+  
+  # Calculate the log-likelihood value on the training data
+  log_likelihood_training_aa <- sum(log(ifelse(response_variable_train_aa == 1, training_predictions_aa, 1 - training_predictions_aa)))
+  
+  # Calculate the AIC value manually
+  deviance <- -2 * sum(log(ifelse(response_variable_train_aa == 1, training_predictions_aa, 1 - training_predictions_aa)))
+  aic_value <- deviance + 2 * (2^df)
+  
+  # Store results
+  misclassification_rates <- c(misclassification_rates, training_misclassification_rate_aa)
+  log_likelihood_means <- c(log_likelihood_means, log_likelihood_training_aa)
+  aic_values <- c(aic_values, aic_value)
+}
+
+# Display the results
+results_df <- data.frame(DegreesOfFreedom = 2^(1:8), 
+                         MisclassificationRate = misclassification_rates, 
+                         MeanLogLikelihood = log_likelihood_means,
+                         AIC = aic_values)
+print(results_df)
+
+
+```
+
+
+
+## f) part
+
+```{r}
+# Misclassification Rate
+misclassification_rate_plot <- ggplot(results_df, aes(x = DegreesOfFreedom)) +
+  geom_line(aes(y = MisclassificationRate, color = "Misclassification Rate")) +
+  labs(title = "Misclassification Rate vs. Degrees of Freedom",
+       x = "Degrees of Freedom",
+       y = "Misclassification Rate")
+
+# Mean Log-Likelihood
+log_likelihood_plot <- ggplot(results_df, aes(x = DegreesOfFreedom)) +
+  geom_line(aes(y = MeanLogLikelihood, color = "Mean Log-Likelihood")) +
+  labs(title = "Mean Log-Likelihood vs. Degrees of Freedom",
+       x = "Degrees of Freedom",
+       y = "Mean Log-Likelihood")
+
+# AIC
+aic_plot <- ggplot(results_df, aes(x = DegreesOfFreedom)) +
+  geom_line(aes(y = AIC, color = "AIC")) +
+  labs(title = "AIC vs. Degrees of Freedom",
+       x = "Degrees of Freedom",
+       y = "AIC")
+
+# Display plots separately
+print(misclassification_rate_plot)
+print(log_likelihood_plot)
+print(aic_plot)
+
+```
+
+
+## ao part
+
+
+## c) part
+
+```{r}
+# Define the response variable for training and test data (for "ao" class)
+response_variable_train <- as.factor(training_data$g %in% c("ao"))
+response_variable_test <- as.factor(test_data$g %in% c("ao"))
+
+# Fit the logistic regression model to the training data (for "ao" class)
+logistic_model <- glmnet(covariates_train, response_variable_train, family = "binomial")
+
+# Make predictions on the training data
+training_predictions <- predict(logistic_model, s = 0.01, newx = covariates_train, type = "response")
+
+# Convert the predicted probabilities to binary class predictions
+predicted_classes_train <- ifelse(training_predictions > 0.5, "ao", "aa")
+
+# Calculate misclassification rate on the training data
+training_misclassification_rate <- mean(predicted_classes_train != training_data$g)
+
+# Calculate the log-likelihood value on the training data
+log_likelihood_training <- sum(log(ifelse(response_variable_train == 1, training_predictions, 1 - training_predictions)))
+
+# Make predictions on the test data
+test_predictions <- predict(logistic_model, s = 0.01, newx = covariates_test, type = "response")
+
+# Convert the predicted probabilities to binary class predictions for the test data
+predicted_classes_test <- ifelse(test_predictions > 0.5, "ao", "aa")
+
+# Calculate misclassification rate on the test data
+test_misclassification_rate <- mean(predicted_classes_test != test_data$g)
+
+# Calculate the log-likelihood value on the test data
+log_likelihood_test <- sum(log(ifelse(response_variable_test == 1, test_predictions, 1 - test_predictions)))
+
+# Display the results
+cat("Misclassification Rate on Training Data for 'ao' class:", training_misclassification_rate, "\n")
+cat("Log-Likelihood on Training Data for 'ao' class:", log_likelihood_training, "\n")
+cat("Misclassification Rate on Test Data for 'ao' class:", test_misclassification_rate, "\n")
+cat("Log-Likelihood on Test Data for 'ao' class:", log_likelihood_test, "\n")
+
+```
+
+## d) part
+
+```{r}
+# Define the response variable for training and test data (for "ao" class)
+response_variable_train_ao <- as.factor(training_data$g == "ao")
+response_variable_test_ao <- as.factor(test_data$g == "ao")
+
+# Create a 12-dimensional model matrix X∗ based on natural cubic splines
+H <- ns(1:256, df = 12)
+covariates_train_ns <- covariates_train %*% H
+covariates_test_ns <- covariates_test %*% H
+
+# Fit the logistic regression model to the training data (for "ao" class)
+logistic_model_ao <- glmnet(covariates_train_ns, response_variable_train_ao, family = "binomial")
+
+# Make predictions on the training data
+training_predictions_ao <- predict(logistic_model_ao, s = 0.01, newx = covariates_train_ns, type = "response")
+
+# Convert the predicted probabilities to binary class predictions
+predicted_classes_train_ao <- ifelse(training_predictions_ao > 0.5, "ao", "aa")
+
+# Calculate misclassification rate on the training data
+training_misclassification_rate_ao <- mean(predicted_classes_train_ao != "ao")
+
+# Calculate the log-likelihood value on the training data
+log_likelihood_training_ao <- sum(log(ifelse(response_variable_train_ao == 1, training_predictions_ao, 1 - training_predictions_ao)))
+
+# Make predictions on the test data
+test_predictions_ao <- predict(logistic_model_ao, s = 0.01, newx = covariates_test_ns, type = "response")
+
+# Convert the predicted probabilities to binary class predictions for the test data
+predicted_classes_test_ao <- ifelse(test_predictions_ao > 0.5, "ao", "aa")
+
+# Calculate misclassification rate on the test data
+test_misclassification_rate_ao <- mean(predicted_classes_test_ao != "ao")
+
+# Calculate the log-likelihood value on the test data
+log_likelihood_test_ao <- sum(log(ifelse(response_variable_test_ao == 1, test_predictions_ao, 1 - test_predictions_ao)))
+
+# Display the results
+cat("Misclassification Rate on Training Data for 'ao' class:", training_misclassification_rate_ao, "\n")
+cat("Log-Likelihood on Training Data for 'ao' class:", log_likelihood_training_ao, "\n")
+cat("Misclassification Rate on Test Data for 'ao' class:", test_misclassification_rate_ao, "\n")
+cat("Log-Likelihood on Test Data for 'ao' class:", log_likelihood_test_ao, "\n")
+
+```
+
+## e) part
+
+```{r}
+# Load the necessary libraries
+library(glmnet)
+library(splines)
+
+# Define the response variable for training and test data (for "ao" class)
+response_variable_train_ao <- as.factor(training_data$g == "ao")
+response_variable_test_ao <- as.factor(test_data$g == "ao")
+
+# Define the covariates for training and test data
+covariates_train <- as.matrix(training_data[, 1:256])
+covariates_test <- as.matrix(test_data[, 1:256])
+
+# Initialize vectors to store results
+misclassification_rates <- numeric()
+log_likelihood_means <- numeric()
+aic_values <- numeric()
+
+# Loop through different degrees of freedom
+for(df in 1:8) {
+  # Create a model matrix X∗ based on natural cubic splines with varying degrees of freedom
+  H <- ns(1:256, df = 2^df)
+  covariates_train_ns <- covariates_train %*% H
+  covariates_test_ns <- covariates_test %*% H
+  
+  # Fit the logistic regression model to the training data (for "ao" class)
+  logistic_model_ao <- glmnet(covariates_train_ns, response_variable_train_ao, family = "binomial")
+  
+  # Make predictions on the training data
+  training_predictions_ao <- predict(logistic_model_ao, s = 0.01, newx = covariates_train_ns, type = "response")
+  
+  # Convert the predicted probabilities to binary class predictions
+  predicted_classes_train_ao <- ifelse(training_predictions_ao > 0.5, "ao", "aa")
+  
+  # Calculate misclassification rate on the training data
+  training_misclassification_rate_ao <- mean(predicted_classes_train_ao != "ao")
+  
+  # Calculate the log-likelihood value on the training data
+  log_likelihood_training_ao <- sum(log(ifelse(response_variable_train_ao == 1, training_predictions_ao, 1 - training_predictions_ao)))
+  
+  # Calculate the AIC value manually
+  deviance <- -2 * sum(log(ifelse(response_variable_train_ao == 1, training_predictions_ao, 1 - training_predictions_ao)))
+  aic_value <- deviance + 2 * (2^df)
+  
+  # Store results
+  misclassification_rates <- c(misclassification_rates, training_misclassification_rate_ao)
+  log_likelihood_means <- c(log_likelihood_means, log_likelihood_training_ao)
+  aic_values <- c(aic_values, aic_value)
+}
+
+# Display the results
+results_df <- data.frame(DegreesOfFreedom = 2^(1:8), 
+                         MisclassificationRate = misclassification_rates, 
+                         MeanLogLikelihood = log_likelihood_means,
+                         AIC = aic_values)
+print(results_df)
+
+```
+
+
+## f) part 
+
+```{r}
+# Misclassification Rate
+misclassification_rate_plot <- ggplot(results_df, aes(x = DegreesOfFreedom)) +
+  geom_line(aes(y = MisclassificationRate, color = "Misclassification Rate")) +
+  labs(title = "Misclassification Rate vs. Degrees of Freedom (for 'ao' class)",
+       x = "Degrees of Freedom",
+       y = "Misclassification Rate")
+
+# Mean Log-Likelihood
+log_likelihood_plot <- ggplot(results_df, aes(x = DegreesOfFreedom)) +
+  geom_line(aes(y = MeanLogLikelihood, color = "Mean Log-Likelihood")) +
+  labs(title = "Mean Log-Likelihood vs. Degrees of Freedom (for 'ao' class)",
+       x = "Degrees of Freedom",
+       y = "Mean Log-Likelihood")
+
+# AIC
+aic_plot <- ggplot(results_df, aes(x = DegreesOfFreedom)) +
+  geom_line(aes(y = AIC, color = "AIC")) +
+  labs(title = "AIC vs. Degrees of Freedom (for 'ao' class)",
+       x = "Degrees of Freedom",
+       y = "AIC")
+
+# Display plots separately
+print(misclassification_rate_plot)
+print(log_likelihood_plot)
+print(aic_plot)
+
+```
+

@@ -1,0 +1,270 @@
+---
+title: "Assignment 3"
+author: "Group 2"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Task 1
+
+## Task 2
+
+## Task 3
+
+## Task 4
+
+## Task 5
+
+## Task 6
+### a) 
+
+```{r, echo=FALSE, message=FALSE}
+# Import packages
+library("caret")
+library("ggplot2")
+library("knitr")
+```
+
+```{r}
+# Generate a simulated data set
+set.seed(1)
+x <- rnorm(100)
+y <- x - 2*x^2 + rnorm(100)
+```
+
+### b) 
+
+```{r}
+# Data prep
+set.seed(100)
+df_1 = data.frame(y=y,x=x)
+df_2 = data.frame(y=y,x=x,x2=x^2)
+df_3 = data.frame(y=y,x=x,x2=x^2,x3=x^3)
+df_4 = data.frame(y=y,x=x,x2=x^2,x3=x^3,x4=x^4)
+model=list("i", "ii", "iii", "iv")
+LOOCV_MSE=list()
+kCV_MSE=list()
+mse = function(sm) 
+    mean(sm$results$RMSE^2)
+
+# LOOCV cross-validation method
+ctrl_loocv <- trainControl(method = "LOOCV")
+ctrl_kcv <- trainControl(method = "cv", number = 10)
+
+# First model 
+
+## LOOCV 
+model_LOOCV_1 <- train(y ~ ., data=df_1, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_1)
+
+## 10 fold CV
+model_kCV_1 <- train(y ~ ., data=df_1, method="lm", trControl=ctrl_kcv)
+print(model_kCV_1)
+
+## Save the results 
+LOOCV_MSE = append(LOOCV_MSE, mse(model_LOOCV_1))
+kCV_MSE = append(kCV_MSE, mse(model_kCV_1))
+
+# Second model 
+
+## LOOCV 
+model_LOOCV_2 <- train(y ~ ., data=df_2, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_2)
+
+## 10 fold CV
+model_kCV_2 <- train(y ~ ., data=df_2, method="lm", trControl=ctrl_kcv)
+print(model_kCV_2)
+
+## Save the results 
+LOOCV_MSE = append(LOOCV_MSE, mse(model_LOOCV_2))
+kCV_MSE = append(kCV_MSE, mse(model_kCV_2))
+
+
+# Third model 
+
+## LOOCV 
+model_LOOCV_3 <- train(y ~ ., data=df_3, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_3)
+
+## 10 fold CV
+model_kCV_3 <- train(y ~ ., data=df_3, method="lm", trControl=ctrl_kcv)
+print(model_kCV_3)
+
+## Save the results 
+LOOCV_MSE = append(LOOCV_MSE, mse(model_LOOCV_3))
+kCV_MSE = append(kCV_MSE, mse(model_kCV_3))
+
+
+# Fourth model 
+
+## LOOCV 
+model_LOOCV_4 <- train(y ~ ., data=df_4, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_4)
+
+## 10 fold CV
+model_kCV_4 <- train(y ~ ., data=df_4, method="lm", trControl=ctrl_kcv)
+print(model_kCV_4)
+
+## Save the results 
+LOOCV_MSE = append(LOOCV_MSE, mse(model_LOOCV_4))
+kCV_MSE = append(kCV_MSE, mse(model_kCV_4))
+
+# Results
+result = data.frame(Model = unlist(model), LOOCV_100 = unlist(LOOCV_MSE),
+                    kCV_100 = unlist(kCV_MSE))
+kable(result, caption = "Summary")
+
+```
+### c)
+```{r}
+# Set seed 
+set.seed(99)
+LOOCV_MSE_2=list()
+kCV_MSE_2=list()
+# First model 
+
+## LOOCV 
+model_LOOCV_1_2 <- train(y ~ ., data=df_1, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_1_2)
+
+## 10 fold CV
+model_kCV_1_2 <- train(y ~ ., data=df_1, method="lm", trControl=ctrl_kcv)
+print(model_kCV_1_2)
+
+## Save the results 
+LOOCV_MSE_2 = append(LOOCV_MSE_2, mse(model_LOOCV_1_2))
+kCV_MSE_2 = append(kCV_MSE_2, mse(model_kCV_1_2))
+
+# Second model 
+
+## LOOCV 
+model_LOOCV_2_2 <- train(y ~ ., data=df_2, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_2_2)
+
+## 10 fold CV
+model_kCV_2_2 <- train(y ~ ., data=df_2, method="lm", trControl=ctrl_kcv)
+print(model_kCV_2_2)
+
+## Save the results 
+LOOCV_MSE_2 = append(LOOCV_MSE_2, mse(model_LOOCV_2_2))
+kCV_MSE_2 = append(kCV_MSE_2, mse(model_kCV_2_2))
+
+
+# Third model 
+
+## LOOCV 
+model_LOOCV_3_2 <- train(y ~ ., data=df_3, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_3_2)
+
+## 10 fold CV
+model_kCV_3_2 <- train(y ~ ., data=df_3, method="lm", trControl=ctrl_kcv)
+print(model_kCV_3_2)
+
+## Save the results 
+LOOCV_MSE_2 = append(LOOCV_MSE_2, mse(model_LOOCV_3_2))
+kCV_MSE_2 = append(kCV_MSE_2, mse(model_kCV_3_2))
+
+
+# Fourth model 
+
+## LOOCV 
+model_LOOCV_4_2 <- train(y ~ ., data=df_4, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_4_2)
+
+## 10 fold CV
+model_kCV_4_2 <- train(y ~ ., data=df_4, method="lm", trControl=ctrl_kcv)
+print(model_kCV_4_2)
+
+## Save the results 
+LOOCV_MSE_2 = append(LOOCV_MSE_2, mse(model_LOOCV_4_2))
+kCV_MSE_2 = append(kCV_MSE_2, mse(model_kCV_4_2))
+
+# Results
+result_2 = data.frame(Model = unlist(model), LOOCV_100 = unlist(LOOCV_MSE),
+                      kCV_100 = unlist(kCV_MSE),LOOCV_99=unlist(LOOCV_MSE_2),
+                      kCV_99 = unlist(kCV_MSE_2))
+kable(result_2, caption = "Comparison of different seeds")
+
+```
+As can be seen from Table 2, the results for Leave-One-Out CV is similar for different seeds since in LOOCV we average the result of n models, which differ in only one observation, therefore we can say that there is more overlap. However, for 10-fold cross validation we observe an (insignificant) difference. In this case, we use 10 fitted models and average the results. Here the difference can be explained by the lower correlation between the training sets resulting from a smaller overlap. 
+
+### d)
+
+$Y = \beta_0 +\beta_1X+\beta_2X^2+\epsilon$ has the smallest LOOCV and 10-fold cross validation error in both seeds. This can be explained with the scatterplot below. One can see the curvature on the graph, which can be explained by a second degree polynomial, consistent with our results. 
+
+```{r}
+plot(x,y)
+```
+
+## Task 7
+
+## Task 8
+
+## Task 9
+```{r, echo=FALSE, message=FALSE}
+if (!requireNamespace("ElemStatLearn")) install.packages(file.path( "https://cran.r-project.org/src/contrib/Archive/ElemStatLearn",
+    "ElemStatLearn_2015.6.26.2.tar.gz")); library("ElemStatLearn")
+library("glmnet")
+library("ggplot2")
+library("knitr")
+```
+
+
+```{r}
+# Import dataset 
+data("SAheart", package="ElemStatLearn")  
+df = SAheart
+X<-cbind(df$sbp,df$tobacco,df$ldl,df$adiposity,factor(df$famhist),
+         df$typea,df$obesity,df$alcohol,df$age)
+colnames(X) <- c('sbp','tobacco','ldl','adiposity','famhist',
+                 'typea','obesity','alcohol','age')
+
+# Fit a logistic regression model with Lasso penalty using only 
+#linear effects for the covariates.
+model<-glmnet(y = df$chd,x=X,family = "binomial",alpha = 1, nfolds=20)
+model_cv<-cv.glmnet(y = df$chd,x=X,family = "binomial",alpha = 1, nfolds=20)
+
+# Visualize the results
+plot(model_cv)
+
+# Penalty selection 
+cat("Penalty value which minimizes the cross-validation loss: ",model_cv$lambda.min)
+cat("Penalty value according to 1 - SE rule: ",model_cv$lambda.1se)
+
+# Model selection 
+kable(as.matrix(cbind(coef(model_cv$glmnet.fit,s = model_cv$lambda.1se),
+                      coef(model_cv$glmnet.fit,s = model_cv$lambda.min))),
+      caption="Complexity Assessment", col.names = c("Lambda - 1SE", "Lambda - Min"))
+
+```
+In terms of model complexity, we can see that the coefficients with the 1-SE lambda show that we eliminate 4 features whereas in the min lambda coefficients the algortihm eliminates only 2 features. That makes the min lambda model more complex. Which was expected as we increase the lambda, the penalty increases and more coefficients become zero and that removes less efficient features from the model. Choosing between the two models, we can say that the minimum lambda model is more prone to overfitting and the 1-SE model is a more conservative choice with fewer features eliminated. 
+
+```{r}
+preds_min <- ifelse(predict(model_cv, X, s = "lambda.min", type = "response")>0.5, 1, 0)
+
+preds_1se <- ifelse(predict(model_cv, X, s = "lambda.1se", type = "response")>0.5, 1, 0)
+
+expected=df$chd
+temp = table(expected,preds_min)
+kable(temp, caption="Confusion Matrix - Min")
+
+temp2 = table(expected,preds_1se)
+kable(temp2, caption="Confusion Matrix - 1-SE")
+```
+
+From Table 4 and Table 5, we can see that the minimum lambda model did a better job correctly classifying the 1s(Yes) and the 1-SE model did a better job classifying the 0s(No). Minimum lambda model classified more observations as 1s and the 1-SE model classified more observations as 0s. 
+
+```{r}
+cat("Misclassification error for minimum lambda: ", (temp[2]+temp[3])/sum(temp))
+
+cat("Misclassification error for 1-SE lambda: ", (temp2[2]+temp2[3])/sum(temp2))
+```
+
+In terms of misclassification error, minimum lambda model did a better job by correctly classifying the observations. However, the difference is not significant. Overall, in this case we do not want to miss the true 1s considering the medical context, therefore the choice should be the the model minimizing cross-validation loss. 
+
+
+## Task 10

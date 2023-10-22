@@ -1,0 +1,40 @@
+---
+title: "3,10 exercises"
+author: "Marcell Frisch"
+date: '2023 10 18 '
+output: html_document
+---
+## 3 task
+
+Let $\widehat{f}(x_{i})=\widehat{y}_{i}$. We aim to derive an expression for $w$:
+
+\begin{align*}
+w &= E_{y}[op] \\
+&= E_{y}[Err_{in}-\overline{err}] \\
+&= E_{y}[Err_{in}]-E_{y}[\overline{err}] \\
+&= E_{y}\left[\frac{1}{N} \sum_{i=1}^{N}E_{Y^{0}}[L(Y_{i}^{0},\widehat{f}(x_{i}))]\right]-E_{y}\left[\frac{1}{N} \sum_{i=1}^{N}L(y_{i},\widehat{f}(x_{i}))\right] \\
+&= \frac{1}{N}\sum_{i=1}^{N}E_{y}E_{Y^{0}}\left[(Y_{i}^{0}-\widehat{y}_{i})^2\right]-E_{y}\left[(y_{i}-\widehat{y}_{i})^2\right].
+\end{align*}
+
+Continuing to simplify:
+
+\begin{align*}
+w &= \frac{1}{N}\sum_{i=1}^{N}E_{y}\left[Y_{i}^{0^2}\right]+E_{y}E_{Y^{0}}\left[\widehat{y}_{i}^2\right]-2E_{y}E_{Y^{0}}\left[Y_{i}^{0}\widehat{y}_{i}\right]-E_{y}\left[y_{i}^2\right]-E_{y}\left[\widehat{y}_{i}^2\right]+2E_{y}\left[y_{i}\widehat{y}_{i}\right] \\
+&= \frac{1}{N}\sum_{i=1}^{N}E_{y}\left[y_{i}^2\right]+E_{y}\left[\widehat{y}_{i}^2\right]-2E_{y}\left[y_{i}\right]E_{y}\left[\widehat{y}_{i}\right]-E_{y}\left[y_{i}^2\right]-E_{y}\left[\widehat{y}_{i}^2\right]+2E_{y}\left[y_{i}\widehat{y}_{i}\right].
+\end{align*}
+
+Further simplifying:
+
+\begin{align*}
+w &= \frac{2}{N}\sum_{i=1}^{N}E_{y}\left[y_{i}\widehat{y}_{i}\right]-E_{y}\left[y_{i}\right]E_{y}\left[\widehat{y}_{i}\right] \\
+&= \frac{2}{N}\sum_{i=1}^{N}E_{y}\left[y_{i}\widehat{y}_{i}-y_{i}E_{y}\left[\widehat{y}_{i}\right]-E_{y}\left[y_{i}\right]\widehat{y}_{i}+E_{y}\left[y_{i}\right]E_{y}\left[\widehat{y}_{i}\right]\right] \\
+&= \frac{2}{N}\sum_{i=1}^{N}E_{y}\left[(\widehat{y}_{i}-E_{y}\left[\widehat{y}_{i}\right])(y_{i}-E_{y}\left[y_{i}\right])\right].
+\end{align*}
+
+This expression simplifies to:
+
+\begin{align*}
+w &= \frac{2}{N}\sum_{i=1}^{N}\text{Cov}(\widehat{y}_{i},y_{i}).
+\end{align*}
+
+Therefore, we have established that $w$ is equal to the sum of the covariances between the predicted values $\widehat{y}_{i}$ and the actual values $y_{i}$ for the given dataset.
