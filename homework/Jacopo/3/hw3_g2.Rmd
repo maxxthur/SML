@@ -8,141 +8,88 @@ output: pdf_document
 
 ## Exercise 1
 
+In this exercise we want to quantify the expected in-sample error, the expected training error and the difference between the two. Firstly, as we derived from \textbf{exercise 3}, we have that
 
-### Expected Training Error:
+$$
+E[Err_{in} - \overline{err}] = E[op] = \frac{2}{N} \sum^N_{i = 1} Cov(\hat{y}_i, y_i)
+$$
 
-Firstly, we want to derive the expected training error. For simplicity, we carry out the decomposition by firstly taking into consideration the training error only.
-
-We expand the expression by adding 0 to the expression:
+In relation to $E[op]$, in \textbf{exercise 4} we have a very similar point to make. For a linear model with the assumptions given in the exercise, we have that the sum over the diagonal elements is the trace of the covariance matrix. Recalling $\hat{y}_i = X(X^TX)^{-1}X^Ty$:
 
 $$
 \begin{aligned}
-&\overline{Err} = \frac{1}{N} \left(  y_{\tau} - X\beta_{\tau}  \right)^T \left(  y_{\tau} - X\beta_{\tau}  \right) =\\
-&\frac{1}{N} \left(  (y_{\tau} - X\beta) + (X\beta - E[X\beta_\tau]) + (E[X\beta_\tau] - X\beta_{\tau})  \right)^T \left(  (y_{\tau} - X\beta) + (X\beta - E[X\beta_\tau]) + (E[X\beta_\tau] - X\beta_{\tau})  \right)=\\
+&E[op] = \frac{2}{N} \sum^N_{i = 1} Cov(\hat{y}_i, y_i) =\\
+&\frac{2}{N} \;trace(X(X^TX)^{-1}X^T)\; \sigma^2_{\epsilon} =\\
+&\frac{2}{N} \;trace((X^TX)(X^TX)^{-1})\; \sigma^2_{\epsilon} =\\
+&\frac{2}{N} \;trace(I_d)\; \sigma^2_{\epsilon} = \cfrac{2d \sigma^2_{\epsilon}}{N}
 \end{aligned}
 $$
 
-Now we observe that this expression gives us 6 terms. Of course, the expectation is a linear operator, so we have:
+So, this is the actual difference between the Expected in-sample error and the Expected training error. We now turn to deriving the Expected in-sample error. For simplicity in notation we define $H = X(X^TX)^{-1}X^T$ as the hat matrix.
 
-- The irreducible error (1): 
-
-$$
-\frac{1}{N}E[(y_{\tau} - X\beta)^T (y_{\tau} - X\beta)] = \sigma^2_{\epsilon}
-$$
-
-Which reduces to $\sigma_{\epsilon}^2$, because we assume having N observations in the training set.
-
-- The bias term (2): 
-
-$$
-\frac{1}{N}E[(X\beta - E[X\beta_\tau])^T(X\beta - E[X\beta_\tau])]
-$$
-- The variance term (3):
-
-$$
-\frac{1}{N}E[(X\beta - E[X\beta_\tau])^T(X\beta - E[X\beta_\tau])]
-$$
-- Cross product (4): 
-
-$$
-\frac{2}{N} E[(y_{\tau} - X\beta)^T (X\beta - E[X\beta_\tau])]
-$$
-For this term, we note that $E[y_{\tau}] = X\beta$, hence the expression goes to 0.
-
-- Cross product (5): 
+Now we turn to deriving to the task of deriving the expected in-sample error. Note $y_0$ denote new observations which are independent from the training dataset observations. Then $\hat{y}_0$ is just the estimated value conditional to the training dataset that we have.
 
 $$
 \begin{aligned}
-&\frac{2}{N} E[(X\beta - E[X\beta_\tau])^T (E[X\beta_\tau] - X\beta_{\tau})] =\\
-& \frac{2}{N} (X\beta - E[X\beta_\tau])^T E[(E[X\beta_\tau] - X\beta_{\tau})]
+&E[Err_{in}] = \frac{1}{N} \left( y_0-\hat{y_0} \right)^T \left( y_0 - \hat{y_0}\right)=\\
+&\frac{1}{N} (\epsilon^T (H - I)^T(H-I)\epsilon) 
 \end{aligned}
 $$
 
-This cross-product also goes to 0, since the term $(X\beta - E[X\beta_\tau])$ is a constant, and $E[(E[X\beta_\tau] - X\beta_{\tau})] = E[X\beta_\tau] - E[X\beta_{\tau}] = 0$
-
-- Cross product (6): 
-
-$$
-\frac{2}{N} E[(y_{\tau} - X\beta)^T (E[X\beta_\tau] - X\beta_{\tau})]
-$$
-
-For this expression we recognize that both of these terms are differences between what we have in the sample $y_{\tau}, X\beta_{\tau}$, and their expectations. Therefore, we can rewrite this as:
+Now use that $(H-I)$ is idempotent, since these are the matrices that give the orthogonal projections. Furthermore, since $H$ is symmetric $I-H$ is also symmetric.
 
 $$
 \begin{aligned}
-&\frac{2}{N} \; cov(y_{\tau}, X\beta_{\tau}) =\\ 
-&\frac{2}{N} cov(y_\tau, X(X^TX)^{-1}X^Ty_\tau) =\\
-&\frac{2}{N} X(X^TX)^{-1}X^T cov(y_\tau, y_\tau) =\\
-&\frac{2}{N} X(X^TX)^{-1}X^T \sigma^2_{\epsilon}
+&E[Err_{in}] = \frac{1}{N} (\epsilon^T (H - I)^T(H-I)\epsilon) =\\
+&\frac{1}{N} (\epsilon^T (I-H)\epsilon) = \frac{1}{N}\epsilon^T \epsilon - \frac{1}{N} \epsilon^T H\epsilon
 \end{aligned}
 $$
-The total expression will be:
+
+This is the in-sample error given a training set we have. Now we take the average over all training sets:
 
 $$
 \begin{aligned}
-&\sigma^2_{\epsilon} + \frac{1}{N}E[(X\beta - E[X\beta_\tau])^T(X\beta - E[X\beta_\tau])]\\
-&+ \frac{1}{N}E[(X\beta - E[X\beta_\tau])^T(X\beta - E[X\beta_\tau])] + \frac{2}{N} (X(X^TX)^{-1}X^T \sigma^2_{\epsilon})
+E_\tau[E[Err_{in}]] = \frac{1}{N} \left( E_\tau[\epsilon^T \epsilon] - E_\tau[\epsilon^T H\epsilon]\right) = \sigma^2_\epsilon - \frac{\sigma^2_\epsilon\; (d + 1))}{N}
 \end{aligned}
 $$
-
-
-### Expected In-Sample Error
-
-The story here is the same, with the difference that we take the expectation with relation of new data points which we never observed, and therefore they are \textbf{independent} from the training observations we have. Hence, we have a similar derivation, where the only differences are observed in the terms (1), (4) and (6). Since (4) goes to 0 anyway for this expression, we focus on (1) and (6).
-
-- For term (1*) we have:
-
-$$
-\frac{1}{N}E[E_{y^0}[(y^0 - X\beta)^T (y^0  - X\beta)]
-$$
-Where $y^0$ is the vector of independent test values we get.
-
-- Term (6*):
-
-Let's just take this without expectation over all training sets:
-$$
-\frac{2}{N}E_{y^0}[(y^0 - X\beta)^T (E[X_0\beta_\tau] - X\beta_{\tau})] = 0
-$$
-
-Since $y^0$ is independent from $X\beta_\tau$, and $E[y_0] = X\beta$.
-
-The final expression would be:
+This is because:
 
 $$
 \begin{aligned}
-&E[err_{in}] = \sigma^2_{\epsilon} + \frac{1}{N}E[(X^0\beta - E[X^0\beta_\tau])^T(X^0\beta - E[X^0\beta_\tau])] + \frac{1}{N}E[(X^0\beta - E[X^0\beta_\tau])^T(X^0\beta - E[X^0\beta_\tau])]
+&E_\tau[\epsilon^T \epsilon] = E_\tau[e^2_1 + e^2_2 + \dots + e^2_N] = N \sigma^2_\epsilon \;\;\;(1)\\
+&E_\tau[\epsilon^T H\epsilon] = E_\tau \left[ \sum^N_{i = 1} H_{ii}e_i^2 + \sum^N_{i \neq j} H_{ij} \epsilon_i \epsilon_j  \right] = trace(H) \;\sigma^2 + 0 \;\;\;(2)
 \end{aligned}
 $$
-
-
-### The expected difference:
-
-We see that terms (1), (2), (3), are the same. Hence, for a linear model the expected difference between the in-sample errors and the training errors is the following:
+For $(2)$ we can say the errors are assumed to be independent. We now derived the expected in-sample error to be:
 
 $$
-E[Err_{in}- \overline{err}] = \frac{2}{N} X(X^TX)^{-1}X^T \sigma^2_{\epsilon}
+E_\tau[E[Err_{in}]] = \sigma^2_\epsilon \left(1- \cfrac{(d+1)}{N} \right)
+$$
+
+The Expected training error is:
+
+$$
+E[\overline{err}] = E_\tau[Err_{in}] - E[op] = \sigma^2_\epsilon \left(1- \cfrac{(d+1)}{N} \right)- \cfrac{2d \sigma^2_{\epsilon}}{N} = \sigma^2_\epsilon \left(  1- \cfrac{(1-d)}{N} \right)
 $$
 ## Exercise 4
 
 If \textbf{y} arises from an additive-error model $Y = f(X) + \epsilon$ with $Var(\epsilon) = \sigma_\epsilon^2$ and where $\hat{y} = Sy$, then one can show that:
 
 $$
-\sum_{i=1}^N cov(\hat{y}, y) = trace(S)\sigma_{\epsilon}^2
+\sum_{i=1}^N cov(\hat{y}_i, y_i) = trace(S)\sigma_{\epsilon}^2
 $$
 
-First we can figure out that:
+### Solution:
+
+The term $\sum_{i=1}^N cov(\hat{y}_i, y_i)$ represents the sum of the diagonal values of the covariance matrix, which is therefore the trace of the covariance matrix. Furthermore, let's consider $cov(\hat{y}, y)$ for vectors $y$ and $\hat{y}$. We have that:
+
+$$
+cov(\hat{y}, y) = cov(Sy, y) = S\; cov(y, y) = S \; \sigma^2_{\epsilon}
+$$
+Adding the two observations together we have that:
 
 $$
 \begin{aligned}
-&\sum_{i=1}^N cov(\hat{y}, y) = trace(\Sigma)
-\end{aligned}
-$$
-
-Therefore: 
-
-$$
-\begin{aligned}
-&trace(\Sigma) = trace(cov(\hat{y}, y))\\
-&trace(\Sigma) = trace(cov(Sy, y)) = trace(S \sigma_y^2) = S \; trace(\sigma_{\epsilon}^2) 
+&\sum_{i=1}^N cov(\hat{y}_i, y_i) = trace(S) \sigma^2_{\epsilon}
 \end{aligned}
 $$
