@@ -101,6 +101,11 @@ training_misclassification_rate <- mean(predicted_classes_train != training_data
 # Calculate the log-likelihood value on the training data
 log_likelihood_training <- sum(log(ifelse(response_variable_train == 1, training_predictions, 1 - training_predictions)))
 
+
+# Calculate the average log-likelihood value on the training data
+average_log_likelihood_training <- log_likelihood_training / length(response_variable_train)
+
+
 # Make predictions on the test data
 test_predictions <- predict(logistic_model, s = 0.01, newx = covariates_test, type = "response")
 
@@ -113,12 +118,17 @@ test_misclassification_rate <- mean(predicted_classes_test != test_data$g)
 # Calculate the log-likelihood value on the test data
 log_likelihood_test<-sum(log(ifelse(response_variable_test == 1, test_predictions, 1 - test_predictions)))
 
+
+# Calculate the average log-likelihood value on the test data
+average_log_likelihood_test <- log_likelihood_test / length(response_variable_test)
+
 # Display the results
 cat("Misclassification Rate on Training Data:", training_misclassification_rate, "\n")
 cat("Log-Likelihood on Training Data:", log_likelihood_training, "\n")
+cat("Average Log-Likelihood on Training Data:", average_log_likelihood_training, "\n")
 cat("Misclassification Rate on Test Data:", test_misclassification_rate, "\n")
 cat("Log-Likelihood on Test Data:", log_likelihood_test, "\n")
-
+cat("Average Log-Likelihood on Test Data:", average_log_likelihood_test, "\n")
 
 ```
 
@@ -300,6 +310,9 @@ training_misclassification_rate <- mean(predicted_classes_train != training_data
 # Calculate the log-likelihood value on the training data
 log_likelihood_training <- sum(log(ifelse(response_variable_train == 1, training_predictions, 1 - training_predictions)))
 
+# Calculate the average log-likelihood value on the training data
+average_log_likelihood_training <- log_likelihood_training / length(response_variable_train)
+
 # Make predictions on the test data
 test_predictions <- predict(logistic_model, s = 0.01, newx = covariates_test, type = "response")
 
@@ -312,11 +325,16 @@ test_misclassification_rate <- mean(predicted_classes_test != test_data$g)
 # Calculate the log-likelihood value on the test data
 log_likelihood_test <- sum(log(ifelse(response_variable_test == 1, test_predictions, 1 - test_predictions)))
 
+# Calculate the average log-likelihood value on the test data
+average_log_likelihood_test <- log_likelihood_test / length(response_variable_test)
+
 # Display the results
-cat("Misclassification Rate on Training Data for 'ao' class:", training_misclassification_rate, "\n")
-cat("Log-Likelihood on Training Data for 'ao' class:", log_likelihood_training, "\n")
-cat("Misclassification Rate on Test Data for 'ao' class:", test_misclassification_rate, "\n")
-cat("Log-Likelihood on Test Data for 'ao' class:", log_likelihood_test, "\n")
+cat("Misclassification Rate on Training Data:", training_misclassification_rate, "\n")
+cat("Log-Likelihood on Training Data:", log_likelihood_training, "\n")
+cat("Average Log-Likelihood on Training Data:", average_log_likelihood_training, "\n")
+cat("Misclassification Rate on Test Data:", test_misclassification_rate, "\n")
+cat("Log-Likelihood on Test Data:", log_likelihood_test, "\n")
+cat("Average Log-Likelihood on Test Data:", average_log_likelihood_test, "\n")
 
 ```
 
