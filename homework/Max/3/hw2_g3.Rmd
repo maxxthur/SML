@@ -18,12 +18,36 @@ library(ggthemes)
 ## Task 2
 
 ```{r}
-x <- rnorm(40, mean = 0, sd = 1)
+# training data
+n = 40
+x <- rnorm(n, mean = 0, sd = 1)
 x2 <- x^2
-noise <- rnorm(40, mean = 0, sd = 1)
+noise <- rnorm(n, mean = 0, sd = 1)
 y <- x + x2 + noise
+df <- data.frame(y = y, x = x, x2 = x2)
 
-summary(lm(y ~ x + x2))
+# fix f hat
+f_hat <- lm(data = df, formula = y ~ .)
+
+# Simulation
+# make 1000 test data sets of n = 10
+test_data <- lapply(1:1000, function(i) {
+  n = 10
+  x <- rnorm(n, mean = 0, sd = 1)
+  x2 <- x^2
+  noise <- rnorm(n, mean = 0, sd = 1)
+  y <- x + x2 + noise
+  data.frame(y = y, x = x, x2 = x2)
+})
+
+# using f hat predict y for the test data and calculate the squared error loss
+mean_squared_loss <- lapply(test_data, function(tt) {
+  pred <- predict(fit, tt)
+  test_error <- mean((pred - tt$test$y)^2)
+})
+
+# test error is the mean over the individual test errors
+mean(unlist(mean_squared_loss))
 ```
 
 
@@ -48,7 +72,7 @@ y <- x - 2*x^2 + rnorm(100)
 dat <- data.frame(y = y, x = x, x2 = x^2, x3 = x^3, x4 = x^4)
 
 # b)
-# we then create a scatterplot and we dare to use # ggplots in built loess implementation to draw a curve that fits the data as best as possible
+# we then create a scatterplot and we dare to use # ggplots in built loess implementation to draw a curve that fits the data as good as possible
 
 dat %>% 
   ggplot(aes(x = x, y = y)) +
@@ -57,6 +81,7 @@ dat %>%
   theme_base()
   
 ```
+ Looking at the scatterplot we observe that the data follows an inverted U-shaped pattern that could be expected if you choose $f(x) =  x - 2x^2$. Another notable fact is that most of the data points are located around the turning point of the inverted U. However, this behavior of y is also expectable as $x, \epsilon \sim N(0, 1)$ both have most of their mass around $0$ and hence the most common value should be around $0$ looking on the data generating process.
 
 
 ```{r}
@@ -87,7 +112,7 @@ summary(fits[[which.min(AIC)]])
 # get fitted values from models in c
 pred_c <- lapply(fits, function(f) f$fitted) 
 
-# get residual standard deviation
+# get residual standard deviations
 sigma_c <- lapply(fits, function(f) summary(f)$sigma) 
 
 # create 100 test data sets
@@ -99,7 +124,16 @@ new_y <- lapply(1:100, function(i) {
 # now the assumption is that errors in linear regression are gaussian hence 
 # the likelihood must be that of a gaussian distribution
 
-# try first for the best model: 
+# for each of the model specifications calculate the in sample error as the 
+# -2 log(LL) where log(LL) for each test data set is determined by inserting
+# the new y values into the normal density with a mean equal to the fitted value
+# of the particular observation and standard deviation equal to the residual 
+# standard deviation of the training fits. This gives us then the individual 
+# log likelihood for every newly generated y to come from the assumed data 
+# generating process. Summing over these then gives the log-likelihood of the 
+# whole test data set. Then we average over the log likelihoods of the 100 test
+# data sets and multiply with -2.
+
 Err <- rep(NA, 4)
 for(i in 1:length(pred_c)) {
 LL <- lapply(new_y, function(ny) {
@@ -111,7 +145,7 @@ Err[i] <- -2 * mean(unlist(LL))
 # print results
 Err
 ```
-
+Looking at the in sample errors for the 4 models we calculated using this particular loss function we see that they are quite similar to the AIC values from task b). This is not very surprising as also the AIC builds on the $- 2 * LL$ if you remember the formula to calculate AIC. 
 
 ## Task 7
 
@@ -120,3 +154,8 @@ Err
 ## Task 9
 
 ## Task 10
+
+```{r}
+install.packages("ElemStatLearn")
+```
+
