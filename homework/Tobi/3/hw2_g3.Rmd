@@ -19,11 +19,175 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Task 5
 
+Assume for $N$ observations $y = (y_1, . . . , y_N )$ the following model: They are drawn i.i.d. from a Poisson distribution with parameter $\lambda$. Further assume that the prior distribution for $\lambda$ is an improper prior which is proportional to a constant on the positive reals.
+
+## a
+
+First we need to determine an approximation of the marginal likelihood based on the Laplace approximation given by
+$$p(y|\mathcal{M})\approx \exp(\ell(y|\hat{\lambda}))\sqrt \frac{2\pi}{\mathcal{J}(\hat{\lambda})},$$
+where $\ell(y|\lambda)$ is the log-likelihood of the data assuming that the observations are i.i.d. data from a Poisson distribution with parameter $\lambda$, $\hat{\lambda}$ is the maximum likelihood estimate and $\mathcal{J}(\lambda)$ is the observed information matrix, i.e., the second derivative of the log-likelihood function evaluated at $\lambda$.
+
+The likelihoodfunction of the data is:
+$$L(\lambda; y) = \prod_{i=1}^{n} \frac{e^{-\lambda} \lambda^{y_i}}{y_i!}$$
+Therefore the log-likelihood function is:
+$$\ell(\lambda; y) = \sum_{i=1}^{n} \left( -\lambda + y_i \log(\lambda) - \log(y_i!) \right)$$
+To get the MLE of $\lambda$ we derive the log-likelihood function wrt. $\lambda$, then set it to zero and solve for $\lambda$:
+$$\frac{d\ell}{d\lambda} = \sum_{i=1}^{n} \left( -1 + \frac{y_i}{\lambda} \right) = 0$$
+$$\implies \hat{\lambda}_{\text{MLE}} = \frac{1}{n} \sum_{i=1}^{n} y_i$$
+For the observed information matrix we derive it again and take the negative of that but since we only have one parameter we have a matrix which exists of one value:
+$$-\frac{d^2\ell}{d\lambda^2} = -\left(-\sum_{i=1}^{n} \frac{y_i}{\lambda^2}\right)=\sum_{i=1}^{n} \frac{y_i}{\lambda^2}$$
+Now lets plug everything into the formula for the Laplace approximation:
+$$p(y|\mathcal{M})\approx \exp \left(\sum_{i=1}^{n} \left( -\hat{\lambda} + y_i \log(\hat{\lambda}) - \log(y_i!) \right)\right)\sqrt \frac{2\pi}{\sum_{i=1}^{n} \frac{y_i}{\hat{\lambda}^2}}$$
+$$=\exp \left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)\right)\sqrt \frac{2\pi}{\frac{1}{\hat{\lambda}^2}\sum_{i=1}^{n}y_i}$$
+$$=\exp \left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)\right)\sqrt \frac{2\pi}{\frac{1}{(\frac{1}{n} \sum_{i=1}^{n} y_i)^2}\sum_{i=1}^{n}y_i}$$
+$$=\exp \left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)\right)\sqrt \frac{2\pi}{\frac{1}{\frac{1}{n^2} (\sum_{i=1}^{n} y_i)^2}\sum_{i=1}^{n}y_i}$$
+$$=\exp \left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)\right)\sqrt \frac{\frac{2\pi}{1}}{\frac{n^2}{\sum_{i=1}^{n} y_i}}$$
+$$=\exp \left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)\right)\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n^2}}$$
+
+
+
+## b
+
+Now we determine $-2$ times the logarithm of the approximation and compare the result to the Bayesian information criterion for this model:
+$$-2*\log \left(\exp \left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)\right)\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n^2}} \right)$$
+$$= -2*\left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right) + \log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n^2}} \right)\right)$$
+The bayesian information criterion has the form:
+$$BIC=-2*loglik+\log (n)*d$$
+(where $d$ is the number of parameters, so in our case 1)
+$$=-2*\sum_{i=1}^{n} \left( -\hat{\lambda} + y_i \log(\hat{\lambda}) - \log(y_i!) \right)+\log (n)*1$$
+$$= -2*\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)+\log (n)$$
+Therefore the left terms are the same for both and we only need to compare
+$$-2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n^2}} \right) \quad \text{with} \quad \log (n)$$
+The left term can be rewritten as:
+$$-2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n^2}} \right)=-2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}}*\frac{1}{\sqrt{n}} \right)$$
+$$=-2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}} \right)+2*\log\left(\sqrt{n} \right)=-2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}} \right)+\log\left(n \right)$$
+So for the terms to be the same we need to have:
+$$-2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}} \right)+\log\left(n \right)=\log(n)$$
+$$\Leftrightarrow -2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}} \right)=0 \quad \Leftrightarrow \log\left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}} \right)=0$$
+$$\Leftrightarrow \sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}}=1 \quad \Leftrightarrow \frac{2\pi \sum_{i=1}^{n} y_i}{n}=1$$
+$$\Leftrightarrow 2\pi \sum_{i=1}^{n} y_i=n$$
+
+
+
 ## Task 6
 
 ## Task 7
 
 ## Task 8
+
+
+We perform a simulation study to assess how good the performance of the LASSO is for variable selection:
+
+
+The following data generating process is used:\
+- Draw a 100-dimensional vector from a standard multivariate normal distribution.\
+- Determine the dependent variable with $\epsilon \sim N(0,0.1)$ by:
+$$y=\sum_{i=1}^{10} x_i+\epsilon.$$
+
+
+## a
+
+Draw 100 data sets of size 1000. Split each data set into a training data set containing the first 100 observations and a test data set containing the remaining 900 observations. For each of the 100 repetitions use glmnet from the glmnet package to fit the LASSO model for different values of $\lambda$ to the training data set and select the $\lambda$ value where predictive performance is best on the test data set.
+
+## b
+
+Determine the proportion of correctly included coefficients from all relevant ones (true positive rate) and the proportion of wrongly included coefficients from all irrelevant ones (false positive rate) for each of the 100 data sets and visualize the distribution of the two rates.
+
+
+```{r}
+library(glmnet)
+library(MASS)
+library(mvtnorm)
+library(Metrics)
+library(ggplot2)
+
+
+ex8 <- function(x){
+  # a)
+
+  set.seed(x)
+  # Matrix with 100 columns and 1000 rows
+  X <- rmvnorm(n = 1000, mean = rep(0, 100), sigma = diag(100))
+  # First 100 rows of each column
+  train_X <- X[1:100,]
+  # Other rows
+  test_X <- X[101:1000,]
+  # 1000 N(0,0.1) distributed values
+  epsilon <- rnorm(n = 1000, mean = 0, sd = sqrt(0.1))
+  # Calculate Y by formula
+  Y <- rowSums(X[,1:10])+epsilon
+  # First 100 elements of calculated Y
+  train_Y <- Y[1:100]
+  # Rest of elements
+  test_Y <- Y[101:1000]
+  # Fit lasso model on training dataset
+  lasso <- glmnet(train_X, train_Y, alpha=1)
+  # Get different lambdas
+  lambda <- lasso$lambda
+  # Create vector to store the predictions
+  predictions <- c()
+  # Loop through each lambda to predict on test data set 
+  # and calculate the root mean squared error
+  for (i in 1:length(lambda)) {
+    prediction <- predict(lasso, newx=test_X, s=lambda[i])
+    predictions[i] <- rmse(test_Y, prediction)
+  }
+  # Find the best predictive lambda (where the RMSE is the smallest)
+  lambda_best <- lambda[which(predictions==min(predictions))]
+  
+  #b)
+  
+  # Get coefficients for best lambda and create a matrix without the intercept
+  coefs <- as.matrix(coef(lasso, s=lambda_best)[-1,])
+  # Converting them to true or false if they are unequal to 0 or not
+  coefs <- coefs[,1]!=0
+  # Correct if we have unequal to 0 for the first 10 (relevant ones)
+  correctly <- sum(coefs[1:10])
+  # Wrong if have unequal to 0 for the others
+  wrongly <- sum(coefs[11:100])
+  # Proportion of correct ones
+  true_positive <- correctly/10
+  # Proportion of wrong ones
+  false_positive <- wrongly/90
+  # Giving back a vector with the true positive and false positive values
+  return(c(true_positive, false_positive))
+}
+# Draw the 100 datasets and rowbind the results and put it in a dataframe
+sets <- as.data.frame(do.call(rbind, lapply(1:100, ex8)))
+
+# Visualize True positive values of the 100 datasets
+ggplot(data=sets, mapping=aes(x=1:100, y=V1)) +
+  geom_point() +
+  labs(y="",
+       x="Simulations",
+       title="True Positive")
+
+```
+
+We can see that the proportion of correctly included coefficients from all relevant ones (true positive rate) is 1 for all 100 data sets in the simulation, which means that the lasso model works well for that.
+
+```{r}
+
+# Visualize False positive values of the 100 datasets
+ggplot(data=sets, mapping=aes(x=1:100, y=V2)) +
+  geom_point() +
+    labs(y="",
+         x="Simulations",
+         title="False Positive")
+
+# Visualize distribution
+ggplot(data=sets, mapping=aes(x=V2)) +
+  geom_bar() +
+    labs(y="Number of Simulations",
+         x="False Positive",
+         title="Distribution of False Positive")
+
+# >Mean value of false positive
+mean(sets[,2])
+
+```
+
+We can see that the proportion of wrongly included coefficients from all irrelevant ones (false positive rate) are not constant like before, but fluctuate a lot across the simulations. We get that the average false positive rate is 0.256 and all of the rates stay below 0.42 except for one which is 0.62. Therefore the lasso model doesn't do the best job at not including irrelevant coefficients.
 
 ## Task 9
 
