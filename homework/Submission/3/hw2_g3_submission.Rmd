@@ -1,0 +1,1087 @@
+---
+title: "Assignment 3"
+author: "Group 2"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggthemes)
+```
+
+## Task 1
+In this exercise we want to quantify the expected in-sample error, the expected training error and the difference between the two. Firstly, as we derived from \textbf{exercise 3}, we have that
+
+$$
+E[Err_{in} - \overline{err}] = E[op] = \frac{2}{N} \sum^N_{i = 1} Cov(\hat{y}_i, y_i)
+$$
+
+In relation to $E[op]$, in \textbf{exercise 4} we have a very similar point to make. For a linear model with the assumptions given in the exercise, we have that the sum over the diagonal elements is the trace of the covariance matrix. Recalling $\hat{y}_i = X(X^TX)^{-1}X^Ty$:
+
+$$
+\begin{aligned}
+&E[op] = \frac{2}{N} \sum^N_{i = 1} Cov(\hat{y}_i, y_i) =\\
+&\frac{2}{N} \;trace(X(X^TX)^{-1}X^T)\; \sigma^2_{\epsilon} =\\
+&\frac{2}{N} \;trace((X^TX)(X^TX)^{-1})\; \sigma^2_{\epsilon} =\\
+&\frac{2}{N} \;trace(I_d)\; \sigma^2_{\epsilon} = \cfrac{2d \sigma^2_{\epsilon}}{N}
+\end{aligned}
+$$
+
+So, this is the actual difference between the Expected in-sample error and the Expected training error. We now turn to deriving the Expected in-sample error. For simplicity in notation we define $H = X(X^TX)^{-1}X^T$ as the hat matrix.
+
+Now we turn to deriving to the task of deriving the expected in-sample error. Note $y_0$ denote new observations which are independent from the training dataset observations. Then $\hat{y}_0$ is just the estimated value conditional to the training dataset that we have.
+
+$$
+\begin{aligned}
+&E[Err_{in}] = \frac{1}{N} \left( y_0-\hat{y_0} \right)^T \left( y_0 - \hat{y_0}\right)=\\
+&\frac{1}{N} (\epsilon^T (H - I)^T(H-I)\epsilon) 
+\end{aligned}
+$$
+
+Now use that $(H-I)$ is idempotent, since these are the matrices that give the orthogonal projections. Furthermore, since $H$ is symmetric $I-H$ is also symmetric.
+
+$$
+\begin{aligned}
+&E[Err_{in}] = \frac{1}{N} (\epsilon^T (H - I)^T(H-I)\epsilon) =\\
+&\frac{1}{N} (\epsilon^T (I-H)\epsilon) = \frac{1}{N}\epsilon^T \epsilon - \frac{1}{N} \epsilon^T H\epsilon
+\end{aligned}
+$$
+
+This is the in-sample error given a training set we have. Now we take the average over all training sets:
+
+$$
+\begin{aligned}
+E_\tau[E[Err_{in}]] = \frac{1}{N} \left( E_\tau[\epsilon^T \epsilon] - E_\tau[\epsilon^T H\epsilon]\right) = \sigma^2_\epsilon - \frac{\sigma^2_\epsilon\; (d + 1))}{N}
+\end{aligned}
+$$
+This is because:
+
+$$
+\begin{aligned}
+&E_\tau[\epsilon^T \epsilon] = E_\tau[e^2_1 + e^2_2 + \dots + e^2_N] = N \sigma^2_\epsilon \;\;\;(1)\\
+&E_\tau[\epsilon^T H\epsilon] = E_\tau \left[ \sum^N_{i = 1} H_{ii}e_i^2 + \sum^N_{i \neq j} H_{ij} \epsilon_i \epsilon_j  \right] = trace(H) \;\sigma^2 + 0 \;\;\;(2)
+\end{aligned}
+$$
+For $(2)$ we can say the errors are assumed to be independent. We now derived the expected in-sample error to be:
+
+$$
+E_\tau[E[Err_{in}]] = \sigma^2_\epsilon \left(1- \cfrac{(d+1)}{N} \right)
+$$
+
+The Expected training error is:
+
+$$
+E[\overline{err}] = E_\tau[Err_{in}] - E[op] = \sigma^2_\epsilon \left(1- \cfrac{(d+1)}{N} \right)- \cfrac{2d \sigma^2_{\epsilon}}{N} = \sigma^2_\epsilon \left(  1- \cfrac{(1-d)}{N} \right)
+$$
+
+## Task 2
+
+We first set up the training data and fix $\hat f$.
+
+```{r}
+# training data
+n = 40
+x <- rnorm(n, mean = 0, sd = 1)
+x2 <- x^2
+noise <- rnorm(n, mean = 0, sd = 1)
+y <- x + x2 + noise
+df <- data.frame(y = y, x = x, x2 = x2)
+
+# fix f hat
+f_hat <- lm(data = df, formula = y ~ .)
+```
+
+
+The test error  is given in general as
+
+$$
+\operatorname{Err}_{\mathcal{T}}=\mathrm{E}[L(Y, \hat{f}(X)) \mid \mathcal{T}]
+$$
+where $mathcal{T}$ is a particular test data set with data unobserved by the model but drawn from the joint distribution of $Y$ and $X$ and $L$ is a loss function. The squared error loss is given by $(Y - \hat f(X))^2$ s.t. we are searching for 
+
+$$
+  \operatorname{Err}_{\mathcal{T}}=\mathrm{E}[(Y, \hat{f}(X))^2 \mid \mathcal{T}]
+$$
+To find this quantity we have to integrate over the joint distribution $f(x, y)$ which is given by 
+
+$$
+  f(x, y) = f(y \mid x) f(x)
+$$
+which are two quantities we know because $x \sim N(0, \sigma^2_x) \Leftrightarrow f(x) = \frac{1}{\sigma_x\sqrt{2\pi}} e^{-\frac{1}{2\sigma_x^2} x^2}$ and $y = x + x^2 + \epsilon \Rightarrow \mathrm{E[y \mid x]} = x + x^2, \ Var[y | x] = \sigma_\epsilon^2$ as x is predetermined and thus constant. As $y|x$ is further just a function of predetermind values and a normal RV it must be normal too, i.e. we have $y|x \sim N(x + x^2, \sigma_\epsilon^2) \Leftrightarrow f(y | x) = \frac{1}{\sigma_\epsilon\sqrt{2\pi}}e^{-\frac{1}{2\sigma_\epsilon^2}(y - x - x^2)^2}$. Thus, we have 
+
+$$
+  f(x, y) = f(y | x) f(x) = \frac{1}{\sigma_\epsilon\sqrt{2\pi}}e^{-\frac{1}{2\sigma_\epsilon^2}(y - x - x^2)^2} \cdot \frac{1}{\sigma_x\sqrt{2\pi}} e^{-\frac{1}{2\sigma_x^2} x^2} = 
+\frac{1}{\sigma_\epsilon \sigma_x 2 \pi} e^{-\frac{1}{2 \sigma_\epsilon^2}\left(y-x-x^2\right)^2-\frac{1}{2 \sigma_x^2} x^2}
+$$
+Further, the squared loss function for this particular problem is given by 
+
+$$
+L(Y, \hat f(X)) = (y - \hat \beta_0 - \hat \beta_1 x - \hat \beta_2 x^2)^2
+$$
+such that we finally arrive at
+
+$$
+\operatorname{Err}_{\mathcal{T}}=\mathrm{E}[(Y, \hat{f}(X))^2 \mid \mathcal{T}] = \int_{-\infty}^\infty \int_{-\infty}^\infty \frac{1}{\sigma_\epsilon \sigma_x 2 \pi} e^{-\frac{1}{2 \sigma_\epsilon^2}\left(y-x-x^2\right)^2-\frac{1}{2 \sigma_x^2} x^2}(y - \hat \beta_0 - \hat \beta_1 x - \hat \beta_2 x^2)^2 dxdy
+$$
+Solving this integral by hand does not appear to be very easy so we opt for numerical integration.
+
+```{r}
+# library cubature allows multivariate numerical integration
+if(!require(cubature)) install.packages("cubature")
+library(cubature)
+
+sigma_x <- 1
+sigma_e <- 1
+
+# setup the integral as a function of two variables
+ int <- function(z) {
+  # setup the 
+  x <- z[1]
+  y <- z[2]
+  # setup the joint joint density
+  jdens <- {
+    (1 / (2 * pi * sigma_x * sigma_e)) * exp(-x^2 / (2 * sigma_x^2) - 
+                                               (y - x - x^2)^2 / (2 * sigma_e^2))}
+
+  # calculate swuared error with coefficients from f hat
+  sq_loss <- (y - coef(f_hat)[1] - coef(f_hat)[2] * x - coef(f_hat)[3] * x^2)^2
+  return(jdens * sq_loss)
+ }
+
+# solve the integral
+solved <- adaptIntegrate(f = int, lowerLimit = c(-Inf, -Inf), upperLimit = c(Inf, Inf))
+```
+
+
+```{r}
+# Simulation
+# make test data set of equal size
+x_test <- rnorm(40, mean = 0, sd = 1)
+x2_test <- x^2
+noise_test <- rnorm(40, mean = 0, sd = 1)
+y_test <- x + x2 + noise
+df_test <- data.frame(y = y_test, x = x_test, x2 = x2_test)
+
+# make 10000 test data sets of n = 10
+test_data <- lapply(1:10000, function(i) {
+  n = 10
+  x <- rnorm(n, mean = 0, sd = 1)
+  x2 <- x^2
+  noise <- rnorm(n, mean = 0, sd = 1)
+  y <- x + x2 + noise
+  data.frame(y = y, x = x, x2 = x2)
+})
+
+# using f hat predict y for the test data and 
+# calculate the squared error loss
+mean_squared_loss <- lapply(test_data, function(tt) {
+  pred <- predict(f_hat, tt)
+  test_error <- mean((pred - tt$y)^2)
+})
+
+# test error of the simulation is the mean over 
+# the individual test errors
+mean(unlist(mean_squared_loss))
+
+# compare to integral
+solved$integral
+```
+We see that the two values are very similar meaning that we can approximate the true test error with simulation methoid in a pretty accurate way. 
+
+
+## Task 3
+
+Let $\widehat{f}(x_{i})=\widehat{y}_{i}$. We aim to derive an expression for $w$:
+
+\begin{align*}
+w &= E_{y}[op] \\
+&= E_{y}[Err_{in}-\overline{err}] \\
+&= E_{y}[Err_{in}]-E_{y}[\overline{err}] \\
+&= E_{y}\left[\frac{1}{N} \sum_{i=1}^{N}E_{Y^{0}}[L(Y_{i}^{0},\widehat{f}(x_{i}))]\right]-E_{y}\left[\frac{1}{N} \sum_{i=1}^{N}L(y_{i},\widehat{f}(x_{i}))\right] \\
+&= \frac{1}{N}\sum_{i=1}^{N}E_{y}E_{Y^{0}}\left[(Y_{i}^{0}-\widehat{y}_{i})^2\right]-E_{y}\left[(y_{i}-\widehat{y}_{i})^2\right].
+\end{align*}
+
+Continuing to simplify:
+
+\begin{align*}
+w &= \frac{1}{N}\sum_{i=1}^{N}E_{y}\left[Y_{i}^{0^2}\right]+E_{y}E_{Y^{0}}\left[\widehat{y}_{i}^2\right]-2E_{y}E_{Y^{0}}\left[Y_{i}^{0}\widehat{y}_{i}\right]-E_{y}\left[y_{i}^2\right]-E_{y}\left[\widehat{y}_{i}^2\right]+2E_{y}\left[y_{i}\widehat{y}_{i}\right] \\
+&= \frac{1}{N}\sum_{i=1}^{N}E_{y}\left[y_{i}^2\right]+E_{y}\left[\widehat{y}_{i}^2\right]-2E_{y}\left[y_{i}\right]E_{y}\left[\widehat{y}_{i}\right]-E_{y}\left[y_{i}^2\right]-E_{y}\left[\widehat{y}_{i}^2\right]+2E_{y}\left[y_{i}\widehat{y}_{i}\right].
+\end{align*}
+
+Further simplifying:
+
+\begin{align*}
+w &= \frac{2}{N}\sum_{i=1}^{N}E_{y}\left[y_{i}\widehat{y}_{i}\right]-E_{y}\left[y_{i}\right]E_{y}\left[\widehat{y}_{i}\right] \\
+&= \frac{2}{N}\sum_{i=1}^{N}E_{y}\left[y_{i}\widehat{y}_{i}-y_{i}E_{y}\left[\widehat{y}_{i}\right]-E_{y}\left[y_{i}\right]\widehat{y}_{i}+E_{y}\left[y_{i}\right]E_{y}\left[\widehat{y}_{i}\right]\right] \\
+&= \frac{2}{N}\sum_{i=1}^{N}E_{y}\left[(\widehat{y}_{i}-E_{y}\left[\widehat{y}_{i}\right])(y_{i}-E_{y}\left[y_{i}\right])\right].
+\end{align*}
+
+This expression simplifies to:
+
+\begin{align*}
+w &= \frac{2}{N}\sum_{i=1}^{N}\text{Cov}(\widehat{y}_{i},y_{i}).
+\end{align*}
+
+Therefore, we have established that $w$ is equal to the sum of the covariances between the predicted values $\widehat{y}_{i}$ and the actual values $y_{i}$ for the given dataset.
+
+## Task 4
+
+If \textbf{y} arises from an additive-error model $Y = f(X) + \epsilon$ with $Var(\epsilon) = \sigma_\epsilon^2$ and where $\hat{y} = Sy$, then one can show that:
+
+$$
+\sum_{i=1}^N cov(\hat{y}_i, y_i) = trace(S)\sigma_{\epsilon}^2
+$$
+
+### Solution:
+
+The term $\sum_{i=1}^N cov(\hat{y}_i, y_i)$ represents the sum of the diagonal values of the covariance matrix, which is therefore the trace of the covariance matrix. Furthermore, let's consider $cov(\hat{y}, y)$ for vectors $y$ and $\hat{y}$. We have that:
+
+$$
+cov(\hat{y}, y) = cov(Sy, y) = S\; cov(y, y) = S \; \sigma^2_{\epsilon}
+$$
+Adding the two observations together we have that:
+
+$$
+\begin{aligned}
+&\sum_{i=1}^N cov(\hat{y}_i, y_i) = trace(S) \sigma^2_{\epsilon}
+\end{aligned}
+$$
+
+## Task 5
+
+Assume for $N$ observations $y = (y_1, . . . , y_N )$ the following model: They are drawn i.i.d. from a Poisson distribution with parameter $\lambda$. Further assume that the prior distribution for $\lambda$ is an improper prior which is proportional to a constant on the positive reals.
+
+## a
+
+First we need to determine an approximation of the marginal likelihood based on the Laplace approximation given by
+$$p(y|\mathcal{M})\approx \exp(\ell(y|\hat{\lambda}))\sqrt \frac{2\pi}{\mathcal{J}(\hat{\lambda})},$$
+where $\ell(y|\lambda)$ is the log-likelihood of the data assuming that the observations are i.i.d. data from a Poisson distribution with parameter $\lambda$, $\hat{\lambda}$ is the maximum likelihood estimate and $\mathcal{J}(\lambda)$ is the observed information matrix, i.e., the second derivative of the log-likelihood function evaluated at $\lambda$.
+
+The likelihoodfunction of the data is:
+$$L(\lambda; y) = \prod_{i=1}^{n} \frac{e^{-\lambda} \lambda^{y_i}}{y_i!}$$
+Therefore the log-likelihood function is:
+$$\ell(\lambda; y) = \sum_{i=1}^{n} \left( -\lambda + y_i \log(\lambda) - \log(y_i!) \right)$$
+To get the MLE of $\lambda$ we derive the log-likelihood function wrt. $\lambda$, then set it to zero and solve for $\lambda$:
+$$\frac{d\ell}{d\lambda} = \sum_{i=1}^{n} \left( -1 + \frac{y_i}{\lambda} \right) = 0$$
+$$\implies \hat{\lambda}_{\text{MLE}} = \frac{1}{n} \sum_{i=1}^{n} y_i$$
+For the observed information matrix we derive it again and take the negative of that but since we only have one parameter we have a matrix which exists of one value:
+$$-\frac{d^2\ell}{d\lambda^2} = -\left(-\sum_{i=1}^{n} \frac{y_i}{\lambda^2}\right)=\sum_{i=1}^{n} \frac{y_i}{\lambda^2}$$
+Now lets plug everything into the formula for the Laplace approximation:
+$$p(y|\mathcal{M})\approx \exp \left(\sum_{i=1}^{n} \left( -\hat{\lambda} + y_i \log(\hat{\lambda}) - \log(y_i!) \right)\right)\sqrt \frac{2\pi}{\sum_{i=1}^{n} \frac{y_i}{\hat{\lambda}^2}}$$
+$$=\exp \left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)\right)\sqrt \frac{2\pi}{\frac{1}{\hat{\lambda}^2}\sum_{i=1}^{n}y_i}$$
+$$=\exp \left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)\right)\sqrt \frac{2\pi}{\frac{1}{(\frac{1}{n} \sum_{i=1}^{n} y_i)^2}\sum_{i=1}^{n}y_i}$$
+$$=\exp \left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)\right)\sqrt \frac{2\pi}{\frac{1}{\frac{1}{n^2} (\sum_{i=1}^{n} y_i)^2}\sum_{i=1}^{n}y_i}$$
+$$=\exp \left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)\right)\sqrt \frac{\frac{2\pi}{1}}{\frac{n^2}{\sum_{i=1}^{n} y_i}}$$
+$$=\exp \left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)\right)\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n^2}}$$
+
+
+
+## b
+
+Now we determine $-2$ times the logarithm of the approximation and compare the result to the Bayesian information criterion for this model:
+$$-2*\log \left(\exp \left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)\right)\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n^2}} \right)$$
+$$= -2*\left(\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right) + \log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n^2}} \right)\right)$$
+The bayesian information criterion has the form:
+$$BIC=-2*loglik+\log (n)*d$$
+(where $d$ is the number of parameters, so in our case 1)
+$$=-2*\sum_{i=1}^{n} \left( -\hat{\lambda} + y_i \log(\hat{\lambda}) - \log(y_i!) \right)+\log (n)*1$$
+$$= -2*\sum_{i=1}^{n} \left( -\frac{1}{n} \sum_{k=1}^{n} y_k + y_i \log(\frac{1}{n} \sum_{k=1}^{n} y_k) - \log(y_i!) \right)+\log (n)$$
+Therefore the left terms are the same for both and we only need to compare
+$$-2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n^2}} \right) \quad \text{with} \quad \log (n)$$
+The left term can be rewritten as:
+$$-2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n^2}} \right)=-2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}}*\frac{1}{\sqrt{n}} \right)$$
+$$=-2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}} \right)+2*\log\left(\sqrt{n} \right)=-2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}} \right)+\log\left(n \right)$$
+So for the terms to be the same we need to have:
+$$-2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}} \right)+\log\left(n \right)=\log(n)$$
+$$\Leftrightarrow -2*\log \left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}} \right)=0 \quad \Leftrightarrow \log\left(\sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}} \right)=0$$
+$$\Leftrightarrow \sqrt{\frac{2\pi \sum_{i=1}^{n} y_i}{n}}=1 \quad \Leftrightarrow \frac{2\pi \sum_{i=1}^{n} y_i}{n}=1$$
+$$\Leftrightarrow 2\pi \sum_{i=1}^{n} y_i=n$$
+
+
+## Task 6
+
+```{r}
+# a)
+# data 
+set.seed(1)
+x <- rnorm(100)
+y <- x - 2*x^2 + rnorm(100)
+```
+
+```{r}
+# assuming you dont mean orthogonal polynomials we set up a 
+#data.frame with all the polynomials inside
+dat <- data.frame(y = y, x = x, x2 = x^2, x3 = x^3, x4 = x^4)
+
+# b)
+# we then create a scatterplot and we dare to use 
+# ggplots in built loess implementation to draw a curve 
+# that fits the data as good as possible
+
+dat %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = F) +
+  theme_base()
+  
+```
+ Looking at the scatterplot we observe that the data follows an inverted U-shaped pattern that could be expected if you choose $f(x) =  x - 2x^2$. Another notable fact is that most of the data points are located around the turning point of the inverted U. However, this behavior of y is also expectable as $x, \epsilon \sim N(0, 1)$ both have most of their mass around $0$ and hence the most common value should be around $0$ looking on the data generating process.
+
+
+```{r}
+# fit the models
+fits <- lapply(2:5, function(i) {
+  lm(data = dat[, 1:i], y ~ .)
+})
+
+# calculate AIC stepwise
+# A get number of coefficients + 1 (we estimate the variance in addition)
+K <- unlist(lapply(fits, function(f) length(f$coef))) + 1
+
+# get the LogLikelihood of the models
+LL <- unlist(lapply(fits, logLik))
+
+# AIC
+AIC <- 2*K - 2*LL
+AIC
+
+# print model summary with for lowest AIC
+summary(fits[[which.min(AIC)]])
+
+```
+
+```{r}
+# d)
+
+# get fitted values from models in c
+pred_c <- lapply(fits, function(f) f$fitted) 
+
+# get residual standard deviations
+sigma_c <- lapply(fits, function(f) summary(f)$sigma) 
+
+# create 100 test data sets
+new_y <- lapply(1:100, function(i) {
+  y <- x - 2*x^2 + rnorm(100)
+  y
+})
+
+# now the assumption is that errors in linear regression are gaussian hence 
+# the likelihood must be that of a gaussian distribution
+
+# for each of the model specifications calculate the in sample error as the 
+# -2 log(LL) where log(LL) for each test data set is determined by inserting
+# the new y values into the normal density with a mean equal to the fitted value
+# of the particular observation and standard deviation equal to the residual 
+# standard deviation of the training fits. This gives us then the individual 
+# log likelihood for every newly generated y to come from the assumed data 
+# generating process. Summing over these then gives the log-likelihood of the 
+# whole test data set. Then we average over the log likelihoods of the 100 test
+# data sets and multiply with -2.
+
+Err <- rep(NA, 4)
+for(i in 1:length(pred_c)) {
+LL <- lapply(new_y, function(ny) {
+  sum(log(dnorm(x = ny, mean = pred_c[[i]], sd = sigma_c[[i]])))
+})
+Err[i] <- -2 * mean(unlist(LL))
+}
+
+# print results
+Err
+```
+Looking at the in sample errors for the 4 models we calculated using this particular loss function we see that they are quite similar to the AIC values from task b). This is not very surprising as also the AIC builds on the $- 2 * LL$ if you remember the formula to calculate AIC. 
+
+## Task 7
+
+### a) 
+
+```{r, echo=FALSE, message=FALSE}
+# Import packages
+library("caret")
+library("ggplot2")
+library("knitr")
+```
+
+```{r}
+# Generate a simulated data set
+set.seed(1)
+x <- rnorm(100)
+y <- x - 2*x^2 + rnorm(100)
+```
+
+### b) 
+
+```{r}
+# Data prep
+set.seed(100)
+df_1 = data.frame(y=y,x=x)
+df_2 = data.frame(y=y,x=x,x2=x^2)
+df_3 = data.frame(y=y,x=x,x2=x^2,x3=x^3)
+df_4 = data.frame(y=y,x=x,x2=x^2,x3=x^3,x4=x^4)
+model=list("i", "ii", "iii", "iv")
+LOOCV_MSE=list()
+kCV_MSE=list()
+mse = function(sm) 
+    mean(sm$results$RMSE^2)
+
+# LOOCV cross-validation method
+ctrl_loocv <- trainControl(method = "LOOCV")
+ctrl_kcv <- trainControl(method = "cv", number = 10)
+
+# First model 
+
+## LOOCV 
+model_LOOCV_1 <- train(y ~ ., data=df_1, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_1)
+
+## 10 fold CV
+model_kCV_1 <- train(y ~ ., data=df_1, method="lm", trControl=ctrl_kcv)
+print(model_kCV_1)
+
+## Save the results 
+LOOCV_MSE = append(LOOCV_MSE, mse(model_LOOCV_1))
+kCV_MSE = append(kCV_MSE, mse(model_kCV_1))
+
+# Second model 
+
+## LOOCV 
+model_LOOCV_2 <- train(y ~ ., data=df_2, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_2)
+
+## 10 fold CV
+model_kCV_2 <- train(y ~ ., data=df_2, method="lm", trControl=ctrl_kcv)
+print(model_kCV_2)
+
+## Save the results 
+LOOCV_MSE = append(LOOCV_MSE, mse(model_LOOCV_2))
+kCV_MSE = append(kCV_MSE, mse(model_kCV_2))
+
+
+# Third model 
+
+## LOOCV 
+model_LOOCV_3 <- train(y ~ ., data=df_3, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_3)
+
+## 10 fold CV
+model_kCV_3 <- train(y ~ ., data=df_3, method="lm", trControl=ctrl_kcv)
+print(model_kCV_3)
+
+## Save the results 
+LOOCV_MSE = append(LOOCV_MSE, mse(model_LOOCV_3))
+kCV_MSE = append(kCV_MSE, mse(model_kCV_3))
+
+
+# Fourth model 
+
+## LOOCV 
+model_LOOCV_4 <- train(y ~ ., data=df_4, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_4)
+
+## 10 fold CV
+model_kCV_4 <- train(y ~ ., data=df_4, method="lm", trControl=ctrl_kcv)
+print(model_kCV_4)
+
+## Save the results 
+LOOCV_MSE = append(LOOCV_MSE, mse(model_LOOCV_4))
+kCV_MSE = append(kCV_MSE, mse(model_kCV_4))
+
+# Results
+result = data.frame(Model = unlist(model), LOOCV_100 = unlist(LOOCV_MSE),
+                    kCV_100 = unlist(kCV_MSE))
+kable(result, caption = "Summary")
+
+```
+
+### c)
+
+```{r}
+# Set seed 
+set.seed(99)
+LOOCV_MSE_2=list()
+kCV_MSE_2=list()
+# First model 
+
+## LOOCV 
+model_LOOCV_1_2 <- train(y ~ ., data=df_1, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_1_2)
+
+## 10 fold CV
+model_kCV_1_2 <- train(y ~ ., data=df_1, method="lm", trControl=ctrl_kcv)
+print(model_kCV_1_2)
+
+## Save the results 
+LOOCV_MSE_2 = append(LOOCV_MSE_2, mse(model_LOOCV_1_2))
+kCV_MSE_2 = append(kCV_MSE_2, mse(model_kCV_1_2))
+
+# Second model 
+
+## LOOCV 
+model_LOOCV_2_2 <- train(y ~ ., data=df_2, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_2_2)
+
+## 10 fold CV
+model_kCV_2_2 <- train(y ~ ., data=df_2, method="lm", trControl=ctrl_kcv)
+print(model_kCV_2_2)
+
+## Save the results 
+LOOCV_MSE_2 = append(LOOCV_MSE_2, mse(model_LOOCV_2_2))
+kCV_MSE_2 = append(kCV_MSE_2, mse(model_kCV_2_2))
+
+
+# Third model 
+
+## LOOCV 
+model_LOOCV_3_2 <- train(y ~ ., data=df_3, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_3_2)
+
+## 10 fold CV
+model_kCV_3_2 <- train(y ~ ., data=df_3, method="lm", trControl=ctrl_kcv)
+print(model_kCV_3_2)
+
+## Save the results 
+LOOCV_MSE_2 = append(LOOCV_MSE_2, mse(model_LOOCV_3_2))
+kCV_MSE_2 = append(kCV_MSE_2, mse(model_kCV_3_2))
+
+
+# Fourth model 
+
+## LOOCV 
+model_LOOCV_4_2 <- train(y ~ ., data=df_4, method="lm", trControl=ctrl_loocv)
+print(model_LOOCV_4_2)
+
+## 10 fold CV
+model_kCV_4_2 <- train(y ~ ., data=df_4, method="lm", trControl=ctrl_kcv)
+print(model_kCV_4_2)
+
+## Save the results 
+LOOCV_MSE_2 = append(LOOCV_MSE_2, mse(model_LOOCV_4_2))
+kCV_MSE_2 = append(kCV_MSE_2, mse(model_kCV_4_2))
+
+# Results
+result_2 = data.frame(Model = unlist(model), LOOCV_100 = unlist(LOOCV_MSE),
+                      kCV_100 = unlist(kCV_MSE),LOOCV_99=unlist(LOOCV_MSE_2),
+                      kCV_99 = unlist(kCV_MSE_2))
+kable(result_2, caption = "Comparison of different seeds")
+
+```
+As can be seen from Table 2, the results for Leave-One-Out CV is similar for different seeds since in LOOCV we average the result of n models, which differ in only one observation, therefore we can say that there is more overlap. However, for 10-fold cross validation we observe an (insignificant) difference. In this case, we use 10 fitted models and average the results. Here the difference can be explained by the lower correlation between the training sets resulting from a smaller overlap. 
+
+### d)
+
+$Y = \beta_0 +\beta_1X+\beta_2X^2+\epsilon$ has the smallest LOOCV and 10-fold cross validation error in both seeds. This can be explained with the scatterplot below. One can see the curvature on the graph, which can be explained by a second degree polynomial, consistent with our results. 
+
+```{r}
+plot(x,y)
+```
+
+
+## Task 8
+
+We perform a simulation study to assess how good the performance of the LASSO is for variable selection:
+
+
+The following data generating process is used:\
+- Draw a 100-dimensional vector from a standard multivariate normal distribution.\
+- Determine the dependent variable with $\epsilon \sim N(0,0.1)$ by:
+$$y=\sum_{i=1}^{10} x_i+\epsilon.$$
+
+
+## a
+
+Draw 100 data sets of size 1000. Split each data set into a training data set containing the first 100 observations and a test data set containing the remaining 900 observations. For each of the 100 repetitions use glmnet from the glmnet package to fit the LASSO model for different values of $\lambda$ to the training data set and select the $\lambda$ value where predictive performance is best on the test data set.
+
+## b
+
+Determine the proportion of correctly included coefficients from all relevant ones (true positive rate) and the proportion of wrongly included coefficients from all irrelevant ones (false positive rate) for each of the 100 data sets and visualize the distribution of the two rates.
+
+
+```{r}
+library(glmnet)
+library(MASS)
+library(mvtnorm)
+library(Metrics)
+library(ggplot2)
+
+
+ex8 <- function(x){
+  # a)
+
+  set.seed(x)
+  # Matrix with 100 columns and 1000 rows
+  X <- rmvnorm(n = 1000, mean = rep(0, 100), sigma = diag(100))
+  # First 100 rows of each column
+  train_X <- X[1:100,]
+  # Other rows
+  test_X <- X[101:1000,]
+  # 1000 N(0,0.1) distributed values
+  epsilon <- rnorm(n = 1000, mean = 0, sd = sqrt(0.1))
+  # Calculate Y by formula
+  Y <- rowSums(X[,1:10])+epsilon
+  # First 100 elements of calculated Y
+  train_Y <- Y[1:100]
+  # Rest of elements
+  test_Y <- Y[101:1000]
+  # Fit lasso model on training dataset
+  lasso <- glmnet(train_X, train_Y, alpha=1)
+  # Get different lambdas
+  lambda <- lasso$lambda
+  # Create vector to store the predictions
+  predictions <- c()
+  # Loop through each lambda to predict on test data set 
+  # and calculate the root mean squared error
+  for (i in 1:length(lambda)) {
+    prediction <- predict(lasso, newx=test_X, s=lambda[i])
+    predictions[i] <- rmse(test_Y, prediction)
+  }
+  # Find the best predictive lambda (where the RMSE is the smallest)
+  lambda_best <- lambda[which(predictions==min(predictions))]
+  
+  #b)
+  
+  # Get coefficients for best lambda and create a matrix without the intercept
+  coefs <- as.matrix(coef(lasso, s=lambda_best)[-1,])
+  # Converting them to true or false if they are unequal to 0 or not
+  coefs <- coefs[,1]!=0
+  # Correct if we have unequal to 0 for the first 10 (relevant ones)
+  correctly <- sum(coefs[1:10])
+  # Wrong if have unequal to 0 for the others
+  wrongly <- sum(coefs[11:100])
+  # Proportion of correct ones
+  true_positive <- correctly/10
+  # Proportion of wrong ones
+  false_positive <- wrongly/90
+  # Giving back a vector with the true positive and false positive values
+  return(c(true_positive, false_positive))
+}
+# Draw the 100 datasets and rowbind the results and put it in a dataframe
+sets <- as.data.frame(do.call(rbind, lapply(1:100, ex8)))
+
+# Visualize True positive values of the 100 datasets
+ggplot(data=sets, mapping=aes(x=1:100, y=V1)) +
+  geom_point() +
+  labs(y="",
+       x="Simulations",
+       title="True Positive")
+
+```
+
+We can see that the proportion of correctly included coefficients from all relevant ones (true positive rate) is 1 for all 100 data sets in the simulation, which means that the lasso model works well for that.
+
+```{r}
+
+# Visualize False positive values of the 100 datasets
+ggplot(data=sets, mapping=aes(x=1:100, y=V2)) +
+  geom_point() +
+    labs(y="",
+         x="Simulations",
+         title="False Positive")
+
+# Visualize distribution
+ggplot(data=sets, mapping=aes(x=V2)) +
+  geom_bar() +
+    labs(y="Number of Simulations",
+         x="False Positive",
+         title="Distribution of False Positive")
+
+# >Mean value of false positive
+mean(sets[,2])
+
+```
+
+We can see that the proportion of wrongly included coefficients from all irrelevant ones (false positive rate) are not constant like before, but fluctuate a lot across the simulations. We get that the average false positive rate is 0.256 and all of the rates stay below 0.42 except for one which is 0.62. Therefore the lasso model doesn't do the best job at not including irrelevant coefficients.
+
+
+## Task 9
+
+```{r, echo=FALSE, message=FALSE}
+if (!requireNamespace("ElemStatLearn")) install.packages(file.path( "https://cran.r-project.org/src/contrib/Archive/ElemStatLearn",
+    "ElemStatLearn_2015.6.26.2.tar.gz")); library("ElemStatLearn")
+library("glmnet")
+library("ggplot2")
+library("knitr")
+```
+
+
+```{r}
+# Import dataset 
+data("SAheart", package="ElemStatLearn")  
+df = SAheart
+X<-cbind(df$sbp,df$tobacco,df$ldl,df$adiposity,factor(df$famhist),
+         df$typea,df$obesity,df$alcohol,df$age)
+colnames(X) <- c('sbp','tobacco','ldl','adiposity','famhist',
+                 'typea','obesity','alcohol','age')
+
+# Fit a logistic regression model with Lasso penalty using only 
+#linear effects for the covariates.
+model<-glmnet(y = df$chd,x=X,family = "binomial",alpha = 1, nfolds=20)
+model_cv<-cv.glmnet(y = df$chd,x=X,family = "binomial",alpha = 1, nfolds=20)
+
+# Visualize the results
+plot(model_cv)
+
+# Penalty selection 
+cat("Penalty value which minimizes the cross-validation loss: ",model_cv$lambda.min)
+cat("Penalty value according to 1 - SE rule: ",model_cv$lambda.1se)
+
+# Model selection 
+kable(as.matrix(cbind(coef(model_cv$glmnet.fit,s = model_cv$lambda.1se),
+                      coef(model_cv$glmnet.fit,s = model_cv$lambda.min))),
+      caption="Complexity Assessment", col.names = c("Lambda - 1SE", "Lambda - Min"))
+
+```
+In terms of model complexity, we can see that the coefficients with the 1-SE lambda show that we eliminate 4 features whereas in the min lambda coefficients the algortihm eliminates only 2 features. That makes the min lambda model more complex. Which was expected as we increase the lambda, the penalty increases and more coefficients become zero and that removes less efficient features from the model. Choosing between the two models, we can say that the minimum lambda model is more prone to overfitting and the 1-SE model is a more conservative choice with fewer features eliminated. 
+
+```{r}
+preds_min <- ifelse(predict(model_cv, X, s = "lambda.min", type = "response")>0.5, 1, 0)
+
+preds_1se <- ifelse(predict(model_cv, X, s = "lambda.1se", type = "response")>0.5, 1, 0)
+
+expected=df$chd
+temp = table(expected,preds_min)
+kable(temp, caption="Confusion Matrix - Min")
+
+temp2 = table(expected,preds_1se)
+kable(temp2, caption="Confusion Matrix - 1-SE")
+```
+
+From Table 4 and Table 5, we can see that the minimum lambda model did a better job correctly classifying the 1s(Yes) and the 1-SE model did a better job classifying the 0s(No). Minimum lambda model classified more observations as 1s and the 1-SE model classified more observations as 0s. 
+
+```{r}
+cat("Misclassification error for minimum lambda: ", (temp[2]+temp[3])/sum(temp))
+
+cat("Misclassification error for 1-SE lambda: ", (temp2[2]+temp2[3])/sum(temp2))
+```
+
+In terms of misclassification error, minimum lambda model did a better job by correctly classifying the observations. However, the difference is not significant. Overall, in this case we do not want to miss the true 1s considering the medical context, therefore the choice should be the the model minimizing cross-validation loss. 
+
+## Task 10
+
+
+
+```{r}
+
+if(require("ElemStatLearn") == F) install.packages("ElemStatLearn_2015.6.26.1.tar.gz", repos = NULL)
+# Check if the "ElemStatLearn" package is installed, and if not, install it from a local file.
+
+# Load the ElemStatLearn package
+library(ElemStatLearn)
+# Load the "ElemStatLearn" package, which is used for machine learning and statistical analysis.
+
+# Load the phoneme dataset
+data(phoneme)
+# Load the "phoneme" dataset, which is included in the "ElemStatLearn" package.
+
+```
+
+
+## a) part 
+
+```{r}
+# Filter the dataset to include only "aa" and "ao" classes
+subset_phoneme <- phoneme[phoneme$g %in% c("aa", "ao"), ]
+# Create a subset of the "phoneme" dataset, containing only the "aa" and "ao" classes.
+
+# Create a line plot
+plot_data <- subset_phoneme[, 1:256]  # Select the covariate columns
+plot_data <- cbind(Class = subset_phoneme$g, plot_data)
+# Prepare the data for plotting, selecting the covariate columns and adding a "Class" column.
+
+# Load the ggplot2 library for data visualization
+library(ggplot2)
+# Load the "ggplot2" library for creating data visualizations.
+
+# Reshape the data for plotting
+plot_data <- reshape2::melt(plot_data, id.vars = "Class")
+# Reshape the data for use in a line plot.
+
+# Create a line plot 
+ggplot(plot_data, aes(x = variable, y = value, color = Class)) +
+  geom_line() +
+  labs(title = "Covariate Values for 'aa' and 'ao' Classes",
+       x = "Index", y = "Covariate Values") +
+  scale_color_manual(values = c("aa" = "blue", "ao" = "red")) +
+  theme_minimal()
+# Create and customize a line plot using ggplot2, showing the covariate values for "aa" and "ao" classes.
+
+```
+
+
+## b) part
+
+```{r}
+# Set a random seed for reproducibility
+set.seed(123)
+# Set a random seed to ensure reproducibility of random processes.
+
+data_aa_ao <- phoneme[(phoneme$g == "aa" | phoneme$g == "ao"), ]
+# Create a subset of the "phoneme" dataset, containing only the "aa" and "ao" classes.
+
+covariate_data <- data_aa_ao[, -ncol(data_aa_ao)]
+# Extract the covariate data, excluding the last column.
+
+covariate_matrix <- as.matrix(covariate_data)
+int_sample <- sample.int(n = nrow(data_aa_ao), size = 1000, replace = F)
+# Randomly sample 1000 rows from the covariate data for training.
+
+training_data <- covariate_data[int_sample,]
+test_data <- covariate_data[-int_sample,]
+# Split the data into training and test sets.
+
+# Verify the dimensions of the training and test datasets
+dim(training_data)
+dim(test_data)
+# Check and display the dimensions of the training and test datasets.
+
+```
+
+
+
+## c) part
+
+```{r}
+training_data$g2 <- ifelse(training_data$g == "aa", 0, 1) # aa corresponds to 0, ao to 1
+training_data$g <- NULL
+# Create a binary response variable, "g2," and remove the original "g" variable.
+
+train_model <- glm(g2 ~ ., data = training_data, family = binomial(link = "logit"))
+summary(train_model)
+# Fit a logistic regression model to the training data and display the summary of the model.
+
+predicted_probs_train <- predict.glm(train_model, newdata = training_data, type="response")
+predicted_probs_test <- predict.glm(train_model, newdata = test_data, type="response")
+# Generate predicted probabilities for both the training and test datasets.
+
+predicted_labels_train <- ifelse(predicted_probs_train > 0.5, 1, 0)
+predicted_labels_test <- ifelse(predicted_probs_test > 0.5, 1, 0)
+# Convert predicted probabilities to binary labels based on a threshold of 0.5.
+
+misclass_rate_train <- mean(predicted_labels_train != training_data$g2)
+misclass_rate_test <- mean(predicted_labels_test != ifelse(test_data$g == "aa", 0, 1))
+# Calculate misclassification rates for training and test datasets.
+
+misclass_rate_train
+misclass_rate_test
+# Display the misclassification rates for training and test datasets.
+
+result_df <- t(data.frame("Misclassification.Rate_train" = round(misclass_rate_train,4), 
+                          "MisclassificationRate_test" = round(misclass_rate_test,4)))
+# Create a data frame to store the misclassification rates and round the values to 4 decimal places.
+
+avg_loglik <- function(actual, predicted_prob) {
+    sum(actual * log(predicted_prob) + (1-actual) * log(1-predicted_prob)) / length(actual)
+}
+# Define a function to calculate the average log-likelihood.
+
+test_data$g2 <- ifelse(test_data$g == "aa", 0 ,1)
+# Create a binary response variable for the test data.
+
+avg_loglik_train <- avg_loglik(training_data$g2, predicted_probs_train)
+avg_loglik_train
+avg_loglik_test <- avg_loglik(test_data$g2, predicted_probs_test)
+avg_loglik_test
+# Calculate average log-likelihood for training and test datasets.
+
+result_df <- rbind.data.frame(result_df, t(data.frame("Average.LogLikelihood_train" = round(avg_loglik_train,4), 
+                                                      "Average.LogLikelihood_test" =  round(avg_loglik_test, 4))))
+colnames(result_df) <- "Full Model"
+# Add the average log-likelihood values to the result data frame and assign column names.
+
+
+```
+
+
+
+## d) part
+
+```{r}
+library(splines)
+H <- ns(1:256, df = 12)
+X.star <- as.matrix(covariate_data[,-ncol(covariate_data)]) %*% H
+# Create a natural spline basis with 12 degrees of freedom and apply it to the covariate data.
+
+X.star <- as.data.frame(X.star)
+X.star$g2 <- ifelse(covariate_data$g == "aa", 0, 1)
+X.star_training <- X.star[int_sample,]
+X.star_test <- X.star[-int_sample,]
+# Prepare the data with the spline basis for modeling.
+
+train_model_spline <- glm(g2 ~ ., data = X.star_training, family = binomial(link = "logit"))
+summary(train_model_spline)
+# Fit a logistic regression model to the data with the spline basis and display the model summary.
+
+predicted_probs_train_spline <- predict.glm(train_model_spline, newdata = X.star_training, type="response")
+predicted_probs_test_spline <- predict.glm(train_model_spline, newdata = X.star_test, type="response")
+# Generate predicted probabilities for training and test datasets with the spline model.
+
+predicted_labels_train_spline <- ifelse(predicted_probs_train_spline > 0.5, 1, 0)
+predicted_labels_test_spline <- ifelse(predicted_probs_test_spline > 0.5, 1, 0)
+# Convert predicted probabilities to binary labels based on a threshold of 0.5.
+
+misclass_rate_train_spline <- mean(predicted_labels_train_spline != X.star_training$g2)
+misclass_rate_test_spline <- mean(predicted_labels_test_spline != X.star_test$g2)
+# Calculate misclassification rates for training and test datasets with the spline model.
+
+misclass_rate_train_spline_12df <- misclass_rate_train_spline
+misclass_rate_train_spline_12df
+misclass_rate_test_spline_12df <- misclass_rate_test_spline
+misclass_rate_test_spline_12df
+# Display misclassification rates for training and test datasets with the spline model.
+
+avg_loglik_train_spline_12df <- avg_loglik(X.star_training$g2, predicted_probs_train_spline)
+avg_loglik_train_spline_12df
+avg_loglik_test_spline_12df <- avg_loglik(X.star_test$g2, predicted_probs_test_spline)
+avg_loglik_test_spline_12df
+# Calculate average log-likelihood for training and test datasets with the spline model.
+
+result_df$Spline.12df <- round(c(misclass_rate_train_spline_12df, misclass_rate_test_spline_12df,
+                           avg_loglik_train_spline_12df, avg_loglik_test_spline_12df),4)
+# Add the misclassification rates and average log-likelihood values to the result data frame for the spline model.
+
+```
+
+
+## e) part
+
+```{r}
+misclassification_rate <- function(data_training, data_test, dec.numbers = 4) {
+  
+  model_train <- glm(g2 ~ ., data = data_training, family = binomial(link = "logit"))
+  
+  predicted_probs_train <- predict.glm(model_train, newdata = data_training, type = "response")
+  predicted_probs_test <- predict.glm(model_train, newdata = data_test, type = "response")
+  
+  predicted_labels_train <- ifelse(predicted_probs_train > 0.5, 1, 0)
+  predicted_labels_test <- ifelse(predicted_probs_test > 0.5, 1, 0)
+  
+  misclass_rate_train <- mean(predicted_labels_train != data_training$g2)
+  misclass_rate_test <- mean(predicted_labels_test != data_test$g2)
+  
+  return(list(model_train, round(misclass_rate_train, dec.numbers), predicted_probs_train, 
+              round(misclass_rate_test, dec.numbers), predicted_probs_test))
+}
+
+
+library(knitr)
+
+spline_results_AIC <- numeric(8)
+spline_results_misclassification <- c()
+spline_results_avg_loglik <- c()
+for (i in 1:8) {
+  H.tmp <- ns(1:256, df = 2^i)
+  
+  X.star.tmp <- as.matrix(covariate_data[,-ncol(covariate_data)]) %*% H.tmp
+  X.star.tmp <- as.data.frame(X.star.tmp)
+  X.star.tmp$g2 <- ifelse(covariate_data$g == "aa", 0, 1)
+  
+  X.star.tmp_training <- X.star.tmp[int_sample,]
+  X.star.tmp_test <- X.star.tmp[-int_sample,]
+
+  tmp <- misclassification_rate(X.star.tmp_training, X.star.tmp_test)
+  
+  model_tmp <- tmp[[1]] # Extracting the model from the results
+  spline_results_AIC[i] <- round(AIC(model_tmp),4)
+  
+  avg_loglik.tmp_train <- round(avg_loglik(X.star.tmp_training$g2, tmp[[3]]), 4)
+  avg_loglik.tmp_test <- round(avg_loglik(X.star.tmp_test$g2, tmp[[5]]), 4)
+  
+  spline_results_avg_loglik <- rbind(spline_results_avg_loglik, c(avg_loglik.tmp_train, avg_loglik.tmp_test))
+  spline_results_misclassification <- rbind(spline_results_misclassification, tmp[c(2,4)])
+}
+rownames(spline_results_misclassification) <- 1:8
+colnames(spline_results_misclassification) <- c("Train.Data", "Test.Data")
+colnames(spline_results_avg_loglik) <- c("Train.Data", "Test.Data")
+
+result_df <- cbind(result_df,t(cbind(spline_results_misclassification, spline_results_avg_loglik)))
+
+# Extract the column names
+cols <- colnames(result_df)[3:10]
+
+# Rename these columns to the desired format
+new_names <- paste0("Spline.", 2^(1:8), "df", sep = "")
+
+# Apply the new names to the dataframe
+names(result_df)[names(result_df) %in% cols] <- new_names
+
+result_df <- rbind(result_df, c(round(AIC(train_model),4), round(AIC(train_model_spline),4), spline_results_AIC))
+result_df <- rbind(result_df, c(NA, 12, 2^(1:8)))
+rownames(result_df) <- c("MR_Train", "MR_Test", "AvgLL_Train", "AvgLL_Test", "AIC", "DF")
+
+
+```
+
+
+
+
+## f) part
+
+```{r}
+library(ggplot2)
+install.packages("ggthemes")
+library(ggthemes)
+
+spline.data <- as.data.frame(t(result_df[,-1]))
+
+# Convert DF to numeric
+spline.data$DF <- as.numeric(spline.data$DF)
+
+# Convert list columns to numeric vectors
+cols_to_convert <- colnames(spline.data)[1:(ncol(spline.data)-1)]
+spline.data[cols_to_convert] <- lapply(spline.data[cols_to_convert], unlist)
+spline.data[cols_to_convert] <- lapply(spline.data[cols_to_convert], as.numeric)
+
+# Confirm the conversion
+str(spline.data)
+
+# Define a custom color palette
+custom_palette <- c("#0072B2", "#D55E00", "#009E73", "#CC79A7", "#F0E442")
+
+# Create a ggplot object
+plot <- ggplot(spline.data, aes(x = DF)) +
+  geom_line(aes(y = MR_Train, color = "Misclassification Rate (Train)"), size = 1.2, alpha = 0.8) +
+  geom_line(aes(y = MR_Test, color = "Misclassification Rate (Test)"), size = 1.2, alpha = 0.8) +
+  geom_line(aes(y = AvgLL_Train, color = "Avg Log-Likelihood (Train)"), size = 1.2, alpha = 0.8) +
+  geom_line(aes(y = AvgLL_Test, color = "Avg Log-Likelihood (Test)"), size = 1.2, alpha = 0.8) +
+  geom_line(aes(y = AIC/1000, color = "AIC"), size = 1.2, alpha = 0.8) +
+  labs(title = "Model Evaluation Metrics over Different DF", 
+       x = "Degrees of Freedom (DF)",
+       y = "Value", 
+       color = "Metrics") +
+  scale_color_manual(values = custom_palette) +
+  scale_x_continuous(name = "Degrees of Freedom (DF)", breaks = spline.data$DF) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 14, face = "bold"),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 14, face = "bold"),
+    legend.text = element_text(size = 12),
+    panel.grid.major = element_line(color = "lightgray", size = 0.3),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    plot.margin = unit(c(1, 1, 0.5, 0.5), "cm")
+  ) +
+  scale_y_continuous(sec.axis = sec_axis(~.*1000, name = "AIC")) +
+  geom_vline(aes(xintercept = 12), linetype = "dashed", color = "grey50", size = 0.5) +
+  geom_vline(aes(xintercept = 16), linetype = "dashed", color = "grey50", size = 0.5) +
+  geom_vline(aes(xintercept = 32), linetype = "dashed", color = "grey50", size = 0.5) +
+  geom_vline(aes(xintercept = 64), linetype = "dashed", color = "grey50", size = 0.5) +
+  geom_vline(aes(xintercept = 128), linetype = "dashed", color = "grey50", size = 0.5) +
+  geom_vline(aes(xintercept = 256), linetype = "dashed", color = "grey50", size = 0.5)
+
+# Print the plot
+print(plot)
+
+```
+Upon closer examination of the plot, a notable trend emerges: an increase in degrees of freedom corresponds to a decline in the misclassification rate on the training subset. In other words, as the model becomes more complex, it becomes better at fitting the training data.
+
+However, this apparent training improvement comes at a price. As degrees of freedom increase, the misclassification rate on the test subset also rises, suggesting that the model is starting to overfit the data. In essence, it's becoming too tailored to the training set and is losing its ability to generalize to new, unseen data.
+
+A similar pattern arises when considering the average log-likelihood. With more degrees of freedom, the model's performance on the training set improves, with the average log-likelihood approaching 0. This implies an excellent fit to the training data. But, once again, this progress is accompanied by overfitting. The average log-likelihood on the test set diverges from 0 as degrees of freedom exceed 12, signifying a loss of generalization.
+
+The AIC, a measure that balances model fit and complexity, follows a specific trajectory. It consistently decreases until reaching the spline model with 12 degrees of freedom. Beyond this point, the AIC begins to rise, indicating that the model's complexity is outweighing its benefit in explaining the data.
+
+In summary, the evidence suggests that the spline model with 12 degrees of freedom strikes an ideal balance. It offers a reasonably complex model that fits the data well without falling into the trap of overfitting. This model appears to be the best compromise between complexity and generalization.
