@@ -17,6 +17,8 @@ library(ggthemes)
 
 ## Task 2
 
+We first set up the training data and fix $\hat f$.
+
 ```{r}
 # training data
 n = 40
@@ -28,10 +30,81 @@ df <- data.frame(y = y, x = x, x2 = x2)
 
 # fix f hat
 f_hat <- lm(data = df, formula = y ~ .)
+```
 
+
+The test error  is given in general as
+
+$$
+\operatorname{Err}_{\mathcal{T}}=\mathrm{E}[L(Y, \hat{f}(X)) \mid \mathcal{T}]
+$$
+where $mathcal{T}$ is a particular test data set with data unobserved by the model but drawn from the joint distribution of $Y$ and $X$ and $L$ is a loss function. The squared error loss is given by $(Y - \hat f(X))^2$ s.t. we are searching for 
+
+$$
+  \operatorname{Err}_{\mathcal{T}}=\mathrm{E}[(Y, \hat{f}(X))^2 \mid \mathcal{T}]
+$$
+To find this quantity we have to integrate over the joint distribution $f(x, y)$ which is given by 
+
+$$
+  f(x, y) = f(y \mid x) f(x)
+$$
+which are two quantities we know because $x \sim N(0, \sigma^2_x) \Leftrightarrow f(x) = \frac{1}{\sigma_x\sqrt{2\pi}} e^{-\frac{1}{2\sigma_x^2} x^2}$ and $y = x + x^2 + \epsilon \Rightarrow \mathrm{E[y \mid x]} = x + x^2, \ Var[y | x] = \sigma_\epsilon^2$ as x is predetermined and thus constant. As $y|x$ is further just a function of predetermind values and a normal RV it must be normal too, i.e. we have $y|x \sim N(x + x^2, \sigma_\epsilon^2) \Leftrightarrow f(y | x) = \frac{1}{\sigma_\epsilon\sqrt{2\pi}}e^{-\frac{1}{2\sigma_\epsilon^2}(y - x - x^2)^2}$. Thus, we have 
+
+$$
+  f(x, y) = f(y | x) f(x) = \frac{1}{\sigma_\epsilon\sqrt{2\pi}}e^{-\frac{1}{2\sigma_\epsilon^2}(y - x - x^2)^2} \cdot \frac{1}{\sigma_x\sqrt{2\pi}} e^{-\frac{1}{2\sigma_x^2} x^2} = 
+\frac{1}{\sigma_\epsilon \sigma_x 2 \pi} e^{-\frac{1}{2 \sigma_\epsilon^2}\left(y-x-x^2\right)^2-\frac{1}{2 \sigma_x^2} x^2}
+$$
+Further, the squared loss function for this particular problem is given by 
+
+$$
+L(Y, \hat f(X)) = (y - \hat \beta_0 - \hat \beta_1 x - \hat \beta_2 x^2)^2
+$$
+such that we finally arrive at
+
+$$
+\operatorname{Err}_{\mathcal{T}}=\mathrm{E}[(Y, \hat{f}(X))^2 \mid \mathcal{T}] = \int_{-\infty}^\infty \int_{-\infty}^\infty \frac{1}{\sigma_\epsilon \sigma_x 2 \pi} e^{-\frac{1}{2 \sigma_\epsilon^2}\left(y-x-x^2\right)^2-\frac{1}{2 \sigma_x^2} x^2}(y - \hat \beta_0 - \hat \beta_1 x - \hat \beta_2 x^2)^2 dxdy
+$$
+Solving this integral by hand does not appear to be very easy so we opt for numerical integration.
+
+```{r}
+# library cubature allows multivariate numerical integration
+if(!require(cubature)) install.packages("cubature")
+library(cubature)
+
+sigma_x <- 1
+sigma_e <- 1
+
+# setup the integral as a function of two variables
+ int <- function(z) {
+  # setup the 
+  x <- z[1]
+  y <- z[2]
+  # setup the joint joint density
+  jdens <- {
+    (1 / (2 * pi * sigma_x * sigma_e)) * exp(-x^2 / (2 * sigma_x^2) - 
+                                               (y - x - x^2)^2 / (2 * sigma_e^2))}
+
+  # calculate swuared error with coefficients from f hat
+  sq_loss <- (y - coef(f_hat)[1] - coef(f_hat)[2] * x - coef(f_hat)[3] * x^2)^2
+  return(jdens * sq_loss)
+ }
+
+# solve the integral
+solved <- adaptIntegrate(f = int, lowerLimit = c(-Inf, -Inf), upperLimit = c(Inf, Inf))
+```
+
+
+```{r}
 # Simulation
-# make 1000 test data sets of n = 10
-test_data <- lapply(1:1000, function(i) {
+# make test data set of equal size
+x_test <- rnorm(40, mean = 0, sd = 1)
+x2_test <- x^2
+noise_test <- rnorm(40, mean = 0, sd = 1)
+y_test <- x + x2 + noise
+df_test <- data.frame(y = y_test, x = x_test, x2 = x2_test)
+
+# make 10000 test data sets of n = 10
+test_data <- lapply(1:10000, function(i) {
   n = 10
   x <- rnorm(n, mean = 0, sd = 1)
   x2 <- x^2
@@ -40,15 +113,21 @@ test_data <- lapply(1:1000, function(i) {
   data.frame(y = y, x = x, x2 = x2)
 })
 
-# using f hat predict y for the test data and calculate the squared error loss
+# using f hat predict y for the test data and 
+# calculate the squared error loss
 mean_squared_loss <- lapply(test_data, function(tt) {
-  pred <- predict(fit, tt)
-  test_error <- mean((pred - tt$test$y)^2)
+  pred <- predict(f_hat, tt)
+  test_error <- mean((pred - tt$y)^2)
 })
 
-# test error is the mean over the individual test errors
+# test error of the simulation is the mean over 
+# the individual test errors
 mean(unlist(mean_squared_loss))
+
+# compare to integral
+solved$integral
 ```
+We see that the two values are very similar meaning that we can approximate the true test error with simulation methoid in a pretty accurate way. 
 
 
 ## Task 3
@@ -68,11 +147,14 @@ y <- x - 2*x^2 + rnorm(100)
 ```
 
 ```{r}
-# assuming you dont mean orthogonal polynomials we set up a data.frame with all the polynomials inside
+# assuming you dont mean orthogonal polynomials we set up a 
+#data.frame with all the polynomials inside
 dat <- data.frame(y = y, x = x, x2 = x^2, x3 = x^3, x4 = x^4)
 
 # b)
-# we then create a scatterplot and we dare to use # ggplots in built loess implementation to draw a curve that fits the data as good as possible
+# we then create a scatterplot and we dare to use 
+# ggplots in built loess implementation to draw a curve 
+# that fits the data as good as possible
 
 dat %>% 
   ggplot(aes(x = x, y = y)) +
@@ -154,8 +236,4 @@ Looking at the in sample errors for the 4 models we calculated using this partic
 ## Task 9
 
 ## Task 10
-
-```{r}
-install.packages("ElemStatLearn")
-```
 
