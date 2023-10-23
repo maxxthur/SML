@@ -1,0 +1,342 @@
+---
+title: "Assignment 3"
+author: "Group 2"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## Task 10
+
+
+```{r}
+
+if(require("ElemStatLearn") == F) install.packages("ElemStatLearn_2015.6.26.1.tar.gz", repos = NULL)
+# Check if the "ElemStatLearn" package is installed, and if not, install it from a local file.
+
+# Load the ElemStatLearn package
+library(ElemStatLearn)
+# Load the "ElemStatLearn" package, which is used for machine learning and statistical analysis.
+
+# Load the phoneme dataset
+data(phoneme)
+# Load the "phoneme" dataset, which is included in the "ElemStatLearn" package.
+
+```
+
+
+## a) part 
+
+```{r}
+# Filter the dataset to include only "aa" and "ao" classes
+subset_phoneme <- phoneme[phoneme$g %in% c("aa", "ao"), ]
+# Create a subset of the "phoneme" dataset, containing only the "aa" and "ao" classes.
+
+# Create a line plot
+plot_data <- subset_phoneme[, 1:256]  # Select the covariate columns
+plot_data <- cbind(Class = subset_phoneme$g, plot_data)
+# Prepare the data for plotting, selecting the covariate columns and adding a "Class" column.
+
+# Load the ggplot2 library for data visualization
+library(ggplot2)
+# Load the "ggplot2" library for creating data visualizations.
+
+# Reshape the data for plotting
+plot_data <- reshape2::melt(plot_data, id.vars = "Class")
+# Reshape the data for use in a line plot.
+
+# Create a line plot 
+ggplot(plot_data, aes(x = variable, y = value, color = Class)) +
+  geom_line() +
+  labs(title = "Covariate Values for 'aa' and 'ao' Classes",
+       x = "Index", y = "Covariate Values") +
+  scale_color_manual(values = c("aa" = "blue", "ao" = "red")) +
+  theme_minimal()
+# Create and customize a line plot using ggplot2, showing the covariate values for "aa" and "ao" classes.
+
+```
+
+
+## b) part
+
+```{r}
+# Set a random seed for reproducibility
+set.seed(123)
+# Set a random seed to ensure reproducibility of random processes.
+
+data_aa_ao <- phoneme[(phoneme$g == "aa" | phoneme$g == "ao"), ]
+# Create a subset of the "phoneme" dataset, containing only the "aa" and "ao" classes.
+
+covariate_data <- data_aa_ao[, -ncol(data_aa_ao)]
+# Extract the covariate data, excluding the last column.
+
+covariate_matrix <- as.matrix(covariate_data)
+int_sample <- sample.int(n = nrow(data_aa_ao), size = 1000, replace = F)
+# Randomly sample 1000 rows from the covariate data for training.
+
+training_data <- covariate_data[int_sample,]
+test_data <- covariate_data[-int_sample,]
+# Split the data into training and test sets.
+
+# Verify the dimensions of the training and test datasets
+dim(training_data)
+dim(test_data)
+# Check and display the dimensions of the training and test datasets.
+
+```
+
+
+
+## c) part
+
+```{r}
+training_data$g2 <- ifelse(training_data$g == "aa", 0, 1) # aa corresponds to 0, ao to 1
+training_data$g <- NULL
+# Create a binary response variable, "g2," and remove the original "g" variable.
+
+train_model <- glm(g2 ~ ., data = training_data, family = binomial(link = "logit"))
+summary(train_model)
+# Fit a logistic regression model to the training data and display the summary of the model.
+
+predicted_probs_train <- predict.glm(train_model, newdata = training_data, type="response")
+predicted_probs_test <- predict.glm(train_model, newdata = test_data, type="response")
+# Generate predicted probabilities for both the training and test datasets.
+
+predicted_labels_train <- ifelse(predicted_probs_train > 0.5, 1, 0)
+predicted_labels_test <- ifelse(predicted_probs_test > 0.5, 1, 0)
+# Convert predicted probabilities to binary labels based on a threshold of 0.5.
+
+misclass_rate_train <- mean(predicted_labels_train != training_data$g2)
+misclass_rate_test <- mean(predicted_labels_test != ifelse(test_data$g == "aa", 0, 1))
+# Calculate misclassification rates for training and test datasets.
+
+misclass_rate_train
+misclass_rate_test
+# Display the misclassification rates for training and test datasets.
+
+result_df <- t(data.frame("Misclassification.Rate_train" = round(misclass_rate_train,4), 
+                          "MisclassificationRate_test" = round(misclass_rate_test,4)))
+# Create a data frame to store the misclassification rates and round the values to 4 decimal places.
+
+avg_loglik <- function(actual, predicted_prob) {
+    sum(actual * log(predicted_prob) + (1-actual) * log(1-predicted_prob)) / length(actual)
+}
+# Define a function to calculate the average log-likelihood.
+
+test_data$g2 <- ifelse(test_data$g == "aa", 0 ,1)
+# Create a binary response variable for the test data.
+
+avg_loglik_train <- avg_loglik(training_data$g2, predicted_probs_train)
+avg_loglik_train
+avg_loglik_test <- avg_loglik(test_data$g2, predicted_probs_test)
+avg_loglik_test
+# Calculate average log-likelihood for training and test datasets.
+
+result_df <- rbind.data.frame(result_df, t(data.frame("Average.LogLikelihood_train" = round(avg_loglik_train,4), 
+                                                      "Average.LogLikelihood_test" =  round(avg_loglik_test, 4))))
+colnames(result_df) <- "Full Model"
+# Add the average log-likelihood values to the result data frame and assign column names.
+
+
+```
+
+
+
+## d) part
+
+```{r}
+library(splines)
+H <- ns(1:256, df = 12)
+X.star <- as.matrix(covariate_data[,-ncol(covariate_data)]) %*% H
+# Create a natural spline basis with 12 degrees of freedom and apply it to the covariate data.
+
+X.star <- as.data.frame(X.star)
+X.star$g2 <- ifelse(covariate_data$g == "aa", 0, 1)
+X.star_training <- X.star[int_sample,]
+X.star_test <- X.star[-int_sample,]
+# Prepare the data with the spline basis for modeling.
+
+train_model_spline <- glm(g2 ~ ., data = X.star_training, family = binomial(link = "logit"))
+summary(train_model_spline)
+# Fit a logistic regression model to the data with the spline basis and display the model summary.
+
+predicted_probs_train_spline <- predict.glm(train_model_spline, newdata = X.star_training, type="response")
+predicted_probs_test_spline <- predict.glm(train_model_spline, newdata = X.star_test, type="response")
+# Generate predicted probabilities for training and test datasets with the spline model.
+
+predicted_labels_train_spline <- ifelse(predicted_probs_train_spline > 0.5, 1, 0)
+predicted_labels_test_spline <- ifelse(predicted_probs_test_spline > 0.5, 1, 0)
+# Convert predicted probabilities to binary labels based on a threshold of 0.5.
+
+misclass_rate_train_spline <- mean(predicted_labels_train_spline != X.star_training$g2)
+misclass_rate_test_spline <- mean(predicted_labels_test_spline != X.star_test$g2)
+# Calculate misclassification rates for training and test datasets with the spline model.
+
+misclass_rate_train_spline_12df <- misclass_rate_train_spline
+misclass_rate_train_spline_12df
+misclass_rate_test_spline_12df <- misclass_rate_test_spline
+misclass_rate_test_spline_12df
+# Display misclassification rates for training and test datasets with the spline model.
+
+avg_loglik_train_spline_12df <- avg_loglik(X.star_training$g2, predicted_probs_train_spline)
+avg_loglik_train_spline_12df
+avg_loglik_test_spline_12df <- avg_loglik(X.star_test$g2, predicted_probs_test_spline)
+avg_loglik_test_spline_12df
+# Calculate average log-likelihood for training and test datasets with the spline model.
+
+result_df$Spline.12df <- round(c(misclass_rate_train_spline_12df, misclass_rate_test_spline_12df,
+                           avg_loglik_train_spline_12df, avg_loglik_test_spline_12df),4)
+# Add the misclassification rates and average log-likelihood values to the result data frame for the spline model.
+
+```
+
+
+## e) part
+
+```{r}
+misclassification_rate <- function(data_training, data_test, dec.numbers = 4) {
+  
+  model_train <- glm(g2 ~ ., data = data_training, family = binomial(link = "logit"))
+  
+  predicted_probs_train <- predict.glm(model_train, newdata = data_training, type = "response")
+  predicted_probs_test <- predict.glm(model_train, newdata = data_test, type = "response")
+  
+  predicted_labels_train <- ifelse(predicted_probs_train > 0.5, 1, 0)
+  predicted_labels_test <- ifelse(predicted_probs_test > 0.5, 1, 0)
+  
+  misclass_rate_train <- mean(predicted_labels_train != data_training$g2)
+  misclass_rate_test <- mean(predicted_labels_test != data_test$g2)
+  
+  return(list(model_train, round(misclass_rate_train, dec.numbers), predicted_probs_train, 
+              round(misclass_rate_test, dec.numbers), predicted_probs_test))
+}
+
+
+library(knitr)
+
+spline_results_AIC <- numeric(8)
+spline_results_misclassification <- c()
+spline_results_avg_loglik <- c()
+for (i in 1:8) {
+  H.tmp <- ns(1:256, df = 2^i)
+  
+  X.star.tmp <- as.matrix(covariate_data[,-ncol(covariate_data)]) %*% H.tmp
+  X.star.tmp <- as.data.frame(X.star.tmp)
+  X.star.tmp$g2 <- ifelse(covariate_data$g == "aa", 0, 1)
+  
+  X.star.tmp_training <- X.star.tmp[int_sample,]
+  X.star.tmp_test <- X.star.tmp[-int_sample,]
+
+  tmp <- misclassification_rate(X.star.tmp_training, X.star.tmp_test)
+  
+  model_tmp <- tmp[[1]] # Extracting the model from the results
+  spline_results_AIC[i] <- round(AIC(model_tmp),4)
+  
+  avg_loglik.tmp_train <- round(avg_loglik(X.star.tmp_training$g2, tmp[[3]]), 4)
+  avg_loglik.tmp_test <- round(avg_loglik(X.star.tmp_test$g2, tmp[[5]]), 4)
+  
+  spline_results_avg_loglik <- rbind(spline_results_avg_loglik, c(avg_loglik.tmp_train, avg_loglik.tmp_test))
+  spline_results_misclassification <- rbind(spline_results_misclassification, tmp[c(2,4)])
+}
+rownames(spline_results_misclassification) <- 1:8
+colnames(spline_results_misclassification) <- c("Train.Data", "Test.Data")
+colnames(spline_results_avg_loglik) <- c("Train.Data", "Test.Data")
+
+result_df <- cbind(result_df,t(cbind(spline_results_misclassification, spline_results_avg_loglik)))
+
+# Extract the column names
+cols <- colnames(result_df)[3:10]
+
+# Rename these columns to the desired format
+new_names <- paste0("Spline.", 2^(1:8), "df", sep = "")
+
+# Apply the new names to the dataframe
+names(result_df)[names(result_df) %in% cols] <- new_names
+
+result_df <- rbind(result_df, c(round(AIC(train_model),4), round(AIC(train_model_spline),4), spline_results_AIC))
+result_df <- rbind(result_df, c(NA, 12, 2^(1:8)))
+rownames(result_df) <- c("MR_Train", "MR_Test", "AvgLL_Train", "AvgLL_Test", "AIC", "DF")
+
+
+```
+
+
+
+
+## f) part
+
+```{r}
+library(ggplot2)
+install.packages("ggthemes")
+library(ggthemes)
+
+spline.data <- as.data.frame(t(result_df[,-1]))
+
+# Convert DF to numeric
+spline.data$DF <- as.numeric(spline.data$DF)
+
+# Convert list columns to numeric vectors
+cols_to_convert <- colnames(spline.data)[1:(ncol(spline.data)-1)]
+spline.data[cols_to_convert] <- lapply(spline.data[cols_to_convert], unlist)
+spline.data[cols_to_convert] <- lapply(spline.data[cols_to_convert], as.numeric)
+
+# Confirm the conversion
+str(spline.data)
+
+# Define a custom color palette
+custom_palette <- c("#0072B2", "#D55E00", "#009E73", "#CC79A7", "#F0E442")
+
+# Create a ggplot object
+plot <- ggplot(spline.data, aes(x = DF)) +
+  geom_line(aes(y = MR_Train, color = "Misclassification Rate (Train)"), size = 1.2, alpha = 0.8) +
+  geom_line(aes(y = MR_Test, color = "Misclassification Rate (Test)"), size = 1.2, alpha = 0.8) +
+  geom_line(aes(y = AvgLL_Train, color = "Avg Log-Likelihood (Train)"), size = 1.2, alpha = 0.8) +
+  geom_line(aes(y = AvgLL_Test, color = "Avg Log-Likelihood (Test)"), size = 1.2, alpha = 0.8) +
+  geom_line(aes(y = AIC/1000, color = "AIC"), size = 1.2, alpha = 0.8) +
+  labs(title = "Model Evaluation Metrics over Different DF", 
+       x = "Degrees of Freedom (DF)",
+       y = "Value", 
+       color = "Metrics") +
+  scale_color_manual(values = custom_palette) +
+  scale_x_continuous(name = "Degrees of Freedom (DF)", breaks = spline.data$DF) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 14, face = "bold"),
+    axis.text = element_text(size = 12),
+    legend.title = element_text(size = 14, face = "bold"),
+    legend.text = element_text(size = 12),
+    panel.grid.major = element_line(color = "lightgray", size = 0.3),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "white"),
+    plot.margin = unit(c(1, 1, 0.5, 0.5), "cm")
+  ) +
+  scale_y_continuous(sec.axis = sec_axis(~.*1000, name = "AIC")) +
+  geom_vline(aes(xintercept = 12), linetype = "dashed", color = "grey50", size = 0.5) +
+  geom_vline(aes(xintercept = 16), linetype = "dashed", color = "grey50", size = 0.5) +
+  geom_vline(aes(xintercept = 32), linetype = "dashed", color = "grey50", size = 0.5) +
+  geom_vline(aes(xintercept = 64), linetype = "dashed", color = "grey50", size = 0.5) +
+  geom_vline(aes(xintercept = 128), linetype = "dashed", color = "grey50", size = 0.5) +
+  geom_vline(aes(xintercept = 256), linetype = "dashed", color = "grey50", size = 0.5)
+
+# Print the plot
+print(plot)
+
+```
+Upon closer examination of the plot, a notable trend emerges: an increase in degrees of freedom corresponds to a decline in the misclassification rate on the training subset. In other words, as the model becomes more complex, it becomes better at fitting the training data.
+
+However, this apparent training improvement comes at a price. As degrees of freedom increase, the misclassification rate on the test subset also rises, suggesting that the model is starting to overfit the data. In essence, it's becoming too tailored to the training set and is losing its ability to generalize to new, unseen data.
+
+A similar pattern arises when considering the average log-likelihood. With more degrees of freedom, the model's performance on the training set improves, with the average log-likelihood approaching 0. This implies an excellent fit to the training data. But, once again, this progress is accompanied by overfitting. The average log-likelihood on the test set diverges from 0 as degrees of freedom exceed 12, signifying a loss of generalization.
+
+The AIC, a measure that balances model fit and complexity, follows a specific trajectory. It consistently decreases until reaching the spline model with 12 degrees of freedom. Beyond this point, the AIC begins to rise, indicating that the model's complexity is outweighing its benefit in explaining the data.
+
+In summary, the evidence suggests that the spline model with 12 degrees of freedom strikes an ideal balance. It offers a reasonably complex model that fits the data well without falling into the trap of overfitting. This model appears to be the best compromise between complexity and generalization.
