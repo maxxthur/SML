@@ -1,5 +1,5 @@
 ---
-title: "Assignment 3"
+title: "Assignment 4"
 author: "Group 2"
 date: "`r Sys.Date()`"
 output: pdf_document
@@ -9,6 +9,10 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggthemes)
+
+if(require("ElemStatLearn") == F) install.packages("ElemStatLearn_2015.6.26.1.tar.gz", repos = NULL)
+# Check if the "ElemStatLearn" package is installed, and if not, install it from a local file.
+
 ```
 
 ## Task 1
@@ -18,7 +22,7 @@ $$
 E[Err_{in} - \overline{err}] = E[op] = \frac{2}{N} \sum^N_{i = 1} Cov(\hat{y}_i, y_i)
 $$
 
-In relation to $E[op]$, in \textbf{exercise 4} we have a very similar point to make. For a linear model with the assumptions given in the exercise, we have that the sum over the diagonal elements is the trace of the covariance matrix. Recalling $\hat{y}_i = X(X^TX)^{-1}X^Ty$:
+In relation to $E[op]$, in \textbf{exercise 4} we have a very similar point to make. For a linear model with the assumptions given in the exercise, we have that the sum over the diagonal elements is the trace of the covariance matrix. Recalling $\hat{y} = X(X^TX)^{-1}X^Ty$:
 
 $$
 \begin{aligned}
@@ -49,11 +53,11 @@ $$
 \end{aligned}
 $$
 
-This is the in-sample error given a training set we have. Now we take the average over all training sets:
+This is the in-sample error given a training set we have. Now, we take the average over all training sets:
 
 $$
 \begin{aligned}
-E_\tau[E[Err_{in}]] = \frac{1}{N} \left( E_\tau[\epsilon^T \epsilon] - E_\tau[\epsilon^T H\epsilon]\right) = \sigma^2_\epsilon - \frac{\sigma^2_\epsilon\; (d + 1))}{N}
+E_\tau[E[Err_{in}]] = \frac{1}{N} \left( E_\tau[\epsilon^T \epsilon] - E_\tau[\epsilon^T H\epsilon]\right) = \sigma^2_\epsilon - \frac{\sigma^2_\epsilon\; (d + 1)}{N}
 \end{aligned}
 $$
 This is because:
@@ -64,17 +68,18 @@ $$
 &E_\tau[\epsilon^T H\epsilon] = E_\tau \left[ \sum^N_{i = 1} H_{ii}e_i^2 + \sum^N_{i \neq j} H_{ij} \epsilon_i \epsilon_j  \right] = trace(H) \;\sigma^2 + 0 \;\;\;(2)
 \end{aligned}
 $$
-For $(2)$ we can say the errors are assumed to be independent. We now derived the expected in-sample error to be:
+For $(2)$ the result is derived by first using linearity of expectations, which permits us to take the expectation of each sum, and secondly $\epsilon$ are pairwise independent, and their expectation is 0. $H$ has dimensions $d+1$ because we include an intercept in addition to the $d$ parameters. We now derived the expected in-sample error to be:
 
 $$
 E_\tau[E[Err_{in}]] = \sigma^2_\epsilon \left(1- \cfrac{(d+1)}{N} \right)
 $$
 
-The Expected training error is:
+The Expected training error therefore is:
 
 $$
 E[\overline{err}] = E_\tau[Err_{in}] - E[op] = \sigma^2_\epsilon \left(1- \cfrac{(d+1)}{N} \right)- \cfrac{2d \sigma^2_{\epsilon}}{N} = \sigma^2_\epsilon \left(  1- \cfrac{(1-d)}{N} \right)
 $$
+
 
 ## Task 2
 
@@ -697,8 +702,6 @@ We can see that the proportion of wrongly included coefficients from all irrelev
 ## Task 9
 
 ```{r, echo=FALSE, message=FALSE}
-if (!requireNamespace("ElemStatLearn")) install.packages(file.path( "https://cran.r-project.org/src/contrib/Archive/ElemStatLearn",
-    "ElemStatLearn_2015.6.26.2.tar.gz")); library("ElemStatLearn")
 library("glmnet")
 library("ggplot2")
 library("knitr")
@@ -762,10 +765,6 @@ In terms of misclassification error, minimum lambda model did a better job by co
 
 
 ```{r}
-
-if(require("ElemStatLearn") == F) install.packages("ElemStatLearn_2015.6.26.1.tar.gz", repos = NULL)
-# Check if the "ElemStatLearn" package is installed, and if not, install it from a local file.
-
 # Load the ElemStatLearn package
 library(ElemStatLearn)
 # Load the "ElemStatLearn" package, which is used for machine learning and statistical analysis.
