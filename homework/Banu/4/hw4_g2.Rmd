@@ -1,5 +1,5 @@
 ---
-title: "Assignment 3"
+title: "Assignment 4"
 author: "Group 2"
 date: "`r Sys.Date()`"
 output: pdf_document
@@ -11,8 +11,6 @@ library(tidyverse)
 library(ggthemes)
 ```
 
-
-
 ## Task 1
 
 ## Task 2
@@ -22,14 +20,147 @@ library(ggthemes)
 ## Task 4
 
 ## Task 5
+```{r}
+suppressMessages(library("ISLR"))
+suppressMessages(library("rpart"))
+suppressMessages(library("tree"))
+suppressMessages(library("dplyr"))
+suppressMessages(library("rpart.plot"))
+suppressMessages(library("knitr"))
+```
+
+```{r}
+data("Carseats", package="ISLR")
+df=Carseats
+```
+
+
+### a) Split the data set into a training set and a test set. -- (70% train-30% test)
+```{r}
+set.seed(123)
+df$id = 1:nrow(df)
+train = df %>% dplyr::sample_frac(0.70)
+test = dplyr::anti_join(df, train, by = 'id')
+train = train[-c(12)]
+test = test[-c(12)]
+```
+### b) Fit a regression tree to the training set. Plot the tree, and interpret the results. What test MSE do you obtain?
+```{r}
+set.seed(123)
+tree = rpart(Sales ~ ., data = train)
+summary(tree)
+
+rpart.plot(tree)
+
+plotcp(tree)
+
+test$preds = predict(tree, test)
+mse = mean((test$preds - test$Sales)^2)
+cat("Mean squared error is: ", mse)
+```
+
+\begin{itemize}
+\item From the plot, we can see that the root node, the variable with the highest 
+feature importance value is ShelveLoc. It is the best predictor of the model.
+\item Price has the second highest value for feature importance. 
+\item The decision tree only used 5 features out of 10.
+\item The algorithm splits the data based on "ShelveLoc" into two categories: Bad-Medium or not. If it's either bad or medium, the next node checks if the "Price" is higher than 106. If it is, in the next node the algorithm again goes back to "ShelveLoc" and checks if the value is bad or not. 
+\end{itemize}
+
+### c) Use cross-validation in order to determine the optimal level of tree complexity. Does pruning the tree improve the test MSE?
+```{r}
+set.seed(123)
+cv_min = tree$cptable[which.min(tree$cptable[,"xerror"]),"xerror"]
+cat("Lowest cross validated error is: ", cv_min)
+
+tc_min = tree$cptable[which.min(tree$cptable[,"xerror"]),"CP"]
+cat("Optimal level of tree complexity is: ",tc_min)
+
+### Pruning the tree
+imin = which.min(tree$cptable[, "xerror"])
+select = which(
+  tree$cptable[, "xerror"] < 
+    sum(tree$cptable[imin, c("xerror", "xstd")]))[1]
+ptree = prune(tree, cp = tree$cptable[select, "CP"])
+
+test$pruned_preds =  predict(ptree, test)
+mse_pruned = mean((test$pruned_preds - test$Sales)^2)
+cat("Mean squared error is: ", mse_pruned)
+```
+According to the results from part b, we can say that pruning the tree did not 
+improve the test MSE. There may be different reasons for such a case. One 
+possible explanation is that pruning simplifies the tree by removing some of 
+the complex branches, reducing the model's overfitting problem. However, if 
+the tree was suffering from sever overfitting, pruning may decrease the 
+predictive power, increasing test MSE.
+
+Another reason may be that pruning can remove important splits that were 
+important and the removed splits might have been capturing meaningful patterns 
+or relationships in the data, and when we eliminate them via pruning, the model 
+may become less accurate, which explains the increased test MSE.
 
 ## Task 6
 
 ## Task 7
+```{r}
+set.seed(123)
+x_1 = runif(100)
+x_2 = rnorm(100)
+x_3 = as.integer(rbernoulli(100))
+x_4 = as.integer(rbernoulli(100 , p=0.1))
+
+df = data_frame(x_1=x_1, x_2=x_2,x_3=x_3, x_4=x_4)
+result = NULL
+for (i in 1:1000)
+{
+  y=rnorm(100)
+  tree = rpart(y ~ ., data = df, control = list(maxdepth = 1))
+  temp = paste0(".*(", paste(colnames(df), collapse="|"), ").*")
+  result = rbind(result, unique(sub(temp,"\\1", labels(tree)[-1])))
+}
+
+result %>% as.data.frame %>%
+  rename(Var='V1') %>%
+  group_by(Var) %>% summarise(N=n()) %>%
+  ggplot(aes(x=Var,y=N,fill=Var))+
+  geom_bar(stat = 'identity',color='black')+
+  scale_y_continuous(labels = scales::comma_format(accuracy = 2))+
+  geom_text(aes(label=N/sum(N)),vjust=-0.25,fontface='bold')+
+  theme_bw()+
+  theme(axis.text = element_text(color='black',face='bold'),
+        axis.title = element_text(color='black',face='bold'),
+        legend.text = element_text(color='black',face='bold'),
+        legend.title = element_text(color='black',face='bold'))
+df_results=table(result)
+kable(df_results)
+```
+
+According to the results, it's clear that variables $X_1$ and $X_2$ were 
+selected more frequently for splitting in comparison to $X_3$ and $X_4$. 
+This observation is in line with the fundamental behavior of decision trees, 
+which tend to choose independent variables with distributions resembling that 
+of the dependent variable $y$. Decision trees try to discover splits that 
+minimize the variance, and given that $y$ follows a normal distribution, it 
+makes sense for the decision tree to favor independent variables with 
+distributions closer to the normal distribution. Keeping that in mind, since 
+$X_2$ follows a standard normal distribution which is more similar to the 
+normal distribution compared to Bernoulli(Binomial) distribution the model 
+also chooses $X_1$ more often for splitting. We would expect $X_2$ to be 
+chosen more frequently than the other independent variables and the results 
+are aligned with our expectations. 
+
+To summarize, the frequencies of $X_1$ and $X_2$, being higher than $X_3$ 
+and $X_4$, can be explained by the distributional similarities to $y$. 
 
 ## Task 8
 
 ## Task 9
 
 ## Task 10
+
+
+
+
+
+
 
