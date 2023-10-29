@@ -149,7 +149,7 @@ prediction_errors %>%
   theme_bw() +
   labs(x = "Prediction Error")
 ```
-
+What we observe is that the tree indeed has problems to capture the clearly linear relationship between $y$ and $x$. This is because the tree takes the originally continuous space and discretizes it, such that predictions do not correspond to a certain value of $x$ but rather a range within the support of $x$. One can see that quite clearly in the plot that visualizes the predictions vs the true value of $y$ in the test data set. The tree predicts in a stepwise manner while the linear regression perfectly captures the linear relationship. Also, we can see that the prediction errors are much lower for linear regression compared to the regression trees which is no surprise looking at the difficulties regression trees have with linear relationships.
 
 ## Task 9
 
