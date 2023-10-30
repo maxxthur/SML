@@ -19,11 +19,101 @@ library(ggthemes)
 
 ## Task 3
 
+Suppose we fit a linear regression model to $N$ observations with response $y_i$ and predictors $x_{i1},...,x_{ip}$. Assume that all variables are standardized such that for example for ${y}$ it holds $y^T1=0$ and $\frac{1}{N}y^Ty=1$. Let $RSS$ be the mean-squared residuals on the training data, and $\hat{\beta}$ the estimated OLS coefficient. Denote by $RSS_j^\star$ the mean-squared residuals on the training data using the same $\hat{\beta}$, but with the $N$ values for the j-th variable randomly
+permuted before the predictions are calculated. Show that
+$$
+E_P\left[RSS_j^\star-RSS\right]=2\hat{\beta_j^2},
+$$
+where $E_P$ denotes expectation with respect to the permutation distribution.\
+
+
+The residual sum of is given by:
+$$
+RSS=(y-X\hat{\beta})^T(y-X\hat{\beta})=(y^T-\hat{\beta}^T X^T)(y-X\hat{\beta})
+$$
+For $RSS_j^\star$ we use $X_j$ instead of $X$, where $X_j$ is $X$ but with the j-th variable randomly permuted. Therefore if we multiply it out and then factor out we get that:
+$$
+E_P[RSS_j^\star-RSS]=E_P[2y^T(X-X_j)\hat{\beta}+\hat{\beta}^T(X_j^TX_j-X^TX)\hat{\beta}]=E_P[2y^T(X-X_j)\hat{\beta}]+E_P[\hat{\beta}^T(X_j^TX_j-X^TX)\hat{\beta}]
+$$
+Because $X_j$ and $X$ only differ in the j-th column, $x_j^\star$ and $x_j$ respectively, it holds that:
+$$
+2y^T(X-X_j)\hat{\beta}=2\hat{\beta_j}y^T(x_j-x_j^\star)
+$$
+If we assume that $X^TX=1$ we can see that $E_P[x_j^\star]=\bar{x_j}=0$ (zero vector). Therefore we get:
+$$
+E_P[2\hat{\beta_j}y^T(x_j-x_j^\star)]=2\hat{\beta_j}y^Tx_j
+$$
+Now the OLS esimator $\hat{\beta}$ is
+$$
+\hat{\beta}=\left(X^TX \right)^{-1}X^Ty=X^Ty
+$$
+which leads to
+$$
+2\hat{\beta_j}y^Tx_j=2\hat{\beta_j}\hat{\beta_j}=2\hat{\beta_j^2}
+$$
+Also because $X^TX=1$ we have that 
+$$
+E_P[\hat{\beta}^T(X_j^TX_j-X^TX)\hat{\beta}]=0.
+$$ 
+Overall we therefore have:
+$$
+E_P[RSS_j^\star-RSS]=2\hat{\beta_j^2}
+$$
+
+
+
 ## Task 4
 
 ## Task 5
 
 ## Task 6
+
+The dataset $icu$ in package aplore3 contains information on patients who were admitted to an adult intensive care
+unit (ICU). The aim is to develop a predictive model for the probability of survival to hospital discharge of these
+patients.
+
+Fit a classification tree to the data without pre-processing:\
+
+- Use very loose stopping criteria such that the tree might be overfitting.\
+- Inspect the fitted tree and describe it.\
+
+
+```{r}
+library(aplore3)
+library(rpart)
+library(rpart.plot)
+data <- icu
+# Fit classification tree without column "id"
+# minsplit = 2 means that the node can split if there are at least 2 observations
+# Small value for cp means that we allow for a more complex tree,
+# therefore more likely to overfit
+tree_overfit <- rpart(sta ~ ., data = icu[, -1], 
+                      control = rpart.control(minsplit = 2, cp = 0.0001))
+rpart.plot(tree_overfit)
+
+```
+We fit a classification tree to the data using very loose stopping criteria. The response is binary, if the patient dies or lives. As we can see the tree has a depth of 14 levels which means that we might have up to 13 decisions before getting to the prediction. This is also an index that we might have overfitting (which we wanted). On the first level we start with the variable loc, which has the information wheter a patient is in a coma, stuporous or concious (nothing). This suggests that this has a huge impact on wheter a patient dies or lives. The leaf nodes exhibit either a 0% or 100% probability of death (0 or 1), with no intermediary values. This suggests a high level of confidence in the model's predictions, potentially indicating overconfidence. The absence of probabilities in the middle range could be a sign of overfitting, as it reflects a lack of allowance for uncertainty in predictions. Additionally, most terminal nodes contain a notably small sample size. Such limited observations in terminal nodes may imply that decisions are influenced by noise or outliers in the training data. Predictions stemming from these nodes might be less reliable, particularly when applied to new data. Also worth mentioning is that the variables age and sys appear multiple times across various branches.
+
+```{r}
+plotcp(tree_overfit)
+printcp(tree_overfit)
+```
+From the table we see that the relative error decreases the more splits we have. The cross-validated error on the other hand increases again after a certain complexity. This suggests that a more complex tree is not always better.
+
+
+- Use pruning to select a tree with a suitable size. Determine this smaller tree and inspect and describe it.
+
+```{r}
+imin <- which.min(tree_overfit$cptable[, "xerror"])
+select <- which(tree_overfit$cptable[, "xerror"] 
+                < sum(tree_overfit$cptable[imin, c("xerror", "xstd")]))[1]
+# Use pruning
+cv_tree <- prune(tree_overfit, cp = tree_overfit$cptable[select, "CP"])
+printcp(cv_tree)
+rpart.plot(cv_tree)
+
+```
+As we can see we now only have two levels left, so the tree got a lot simpler. We only have the prediction if someone lives or dies, based on the variable loc, which holds the information if someone is in a coma, is stuporous or is concious (nothing). We can interpret the tree easily now, but we also don't consider the impact of other variables on the outcome.
 
 ## Task 7
 

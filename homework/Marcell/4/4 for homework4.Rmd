@@ -1,0 +1,132 @@
+---
+title: "4th exercise"
+author: "Marcell Frisch"
+date: '2023 10 25 '
+output: html_document
+
+---
+
+# 4 task
+
+## a) part
+
+
+Sketch the tree corresponding to the partition of the predictor space illustrated on the left of the figure. The
+numbers inside the boxes indicate the mean of Y within each region.
+
+
+```{r}
+
+# Install and load the necessary packages
+if (!requireNamespace("DiagrammeR", quietly = TRUE)) {
+  install.packages("DiagrammeR")
+}
+
+library(DiagrammeR)
+
+
+
+```
+
+```{r}
+
+# Create a decision tree structure with circles of the same size and True/False labels
+decision_tree <- "
+digraph DecisionTree {
+  node [shape=circle, style=filled, fillcolor=lightgray, width=1, height=1];
+  root [label=\"x1 <= 1\"];
+  decision1 [label=\"Mean of Y is 5\"];
+  decision2 [label=\"x2 <= 1\"];
+  leaf3 [label=\"x1 <= 0\"];
+  leaf4 [label=\"Mean of Y is 15\"];
+  decision3 [label=\"Mean of Y is 3\"];  
+  decision4 [label=\"x2 <= 0\"]; 
+  leaf5 [label=\"Mean of Y is 10\"];   
+  leaf6 [label=\"Mean of Y is 0\"];   
+  root -> decision1 [label=\"False\"];
+  root -> decision2 [label=\"True\"];
+  
+  decision2 -> leaf3 [label=\"True\"];
+  decision2 -> leaf4 [label=\"False\"];
+  
+  leaf3 -> decision3 [label=\"True\"];      
+  leaf3 -> decision4 [label=\"False\"];    
+
+  decision4 -> leaf5 [label=\"True\"];   
+  decision4 -> leaf6 [label=\"False\"];  
+}
+"
+
+# Create a graph from the decision tree structure
+tree_graph <- grViz(decision_tree)
+
+# Display the decision tree
+tree_graph
+
+
+```
+
+## b) part
+
+Create a diagram similar to the plot on the left in the figure, using the tree illustrated on the right of the
+same figure. You should divide up the predictor space into the correct regions, and indicate the mean for
+each region. Determine also the fitted function.
+
+
+
+```{r}
+par(xpd = NA)
+plot(NA, NA, type = "n", xlim = c(0, 1), ylim = c(0, 1), xlab = "x1", ylab = "x2", xaxt = "n", yaxt = "n")
+lines(x = c(40,40)/100, y = c(0,50)/100)
+lines(x = c(0,100)/100, y = c(50,50)/100)
+lines(x= c(0,40)/100,y=c(25,25)/100)
+lines(x=c(15,15)/100,y=c(25,50)/100)
+
+text(x = 40/100, y = -0.1, labels = c("1"), col = "black") 
+text(x = 15/100, y = -0.1, labels = c("0"), col = "black")
+text(x = -0.1, y = 25/100, labels = c("1"), col = "black")
+text(x = -0.1, y = 50/100, labels = c("2"), col = "black")
+
+
+text(x = 50/100, y = 75/100, labels = c("Node 9, mean=2.5"),cex=0.5)
+text(x = 7.5/100, y = 40/100, labels = c("Node 6, mean=-1.1"),cex=0.5)
+text(x = 27.5/100, y = 40/100, labels = c("Node 7, mean=0.12"),cex=0.5)
+text(x = 70/100, y = 25/100, labels = c("Node 8, mean=0.4"),cex=0.5)
+text(x = 20/100, y = 12.5/100, labels = c("Node 4, mean=-1.8"),cex=0.5)
+
+
+```
+
+
+
+
+Provides the mean value of y for a specific region.
+
+```{r}
+f_function <- function(x1, x2) {
+  sapply(1:length(x1), function(i) {
+    if (x2[i] < 2) {
+      if (x1[i] < 1) {
+        if (x2[i] < 1) {
+          -1.8
+        } else {
+          if (x1[i] < 0.003) {
+            -1.1
+          } else {
+            0.12
+          }
+        }
+      } else {
+        0.4
+      }
+    } else {
+      2.5
+    }
+  })
+}
+
+result <- f_function(c(-1, 0, 1, 2), c(0, 1, 2, 3))
+
+```
+
+

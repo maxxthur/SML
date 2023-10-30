@@ -1,0 +1,52 @@
+---
+title: "2 task"
+author: "Marcell Frisch"
+date: '2023 10 25 '
+output: html_document
+---
+
+## 2nd task 
+without loss of generality, we can look at the case where $\mu=0$,$\sigma^2=1$:
+
+Let $x^{(k)} _{i}$ be a sample i from the $k$ th bootstrap.
+
+then $\overline{x}^{*}_{k} =\frac{1}{n}\sum_{i} x^{(k)}_{i}$
+
+Key values we need to compute are:
+
+$$
+E x^{k}_{i} = E (E[x^{(k)}_{i}|x]) = E\overline{x}=0
+$$
+
+$$
+var(x^{(k)}_{i})=E(var(x^{(k)}_{i}|x))+var(E[x^{(k)}_{i}|x]) = \frac{n-1}{n}+\frac{1}{n}=1
+$$
+$$
+cov(x^{(1)}_{i},x^{(2)}_{j}) =E(x^{(1)}_{i}-0)(x^{(2)}_{j}-0)= E(E[x^{(1)}_{i},x^{(2)}_{j}|x])= E\overline{x}^2=\frac{1}{n}
+$$
+
+the same is true for the $(x^{(k)}_{i},x^{(k)}_{j})$ where $i{\neq }j$
+
+With above the calculation is going like this:
+
+$$
+cov(\overline{x}^{*}_{1},\overline{x}^{*}_{2})= \frac{1}{n^2}(\sum_{i,j}cov( x^{(1)}_{i},x^{(2)}_{j})) = \frac{1}{n}
+$$
+$$
+var(\overline{x}^{*}_{i})= \frac{1}{n^2}(x*var(x^{(1)}_{1})+n(n-1)*cov(x^{(1)}_{1},x^{(1)}_{2}))= \frac{2n-1}{n^2}
+$$
+$$
+\rightarrow corr(\overline{x}^{*}_{1},\overline{x}^{*}_{2})= \frac{n}{2n-1}
+$$
+
+We have already derived $\operatorname{Var}\left(\bar{x}_1^*\right.)$ above. For $\bar{x}_{\text {bag }}$, assume we have $B$ realizations, then
+$$
+\begin{aligned}
+\operatorname{Var}\left(\bar{x}_{\text {bag }}\right) & =\operatorname{Var}\left(\frac{1}{B} \sum_{i=1}^B \bar{x}_i^*\right) \\
+& =\frac{1}{B^2} \sum_{i=1}^B \operatorname{Var}\left(\bar{x}_i^*\right)+\frac{1}{B^2} \sum_{j \neq k}^B \operatorname{Cov}\left(\bar{x}_j^*, \bar{x}_k^*\right) \\
+& =\frac{1}{B} * \frac{(N-1) \sigma^2}{N^2}+\frac{B-1}{B} * \frac{\sigma^2}{N} \\
+& =\frac{(2 N-1)+(B-1) N}{B N^2} * \sigma^2
+\end{aligned}
+$$
+
+
