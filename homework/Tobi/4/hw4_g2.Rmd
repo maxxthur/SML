@@ -104,15 +104,16 @@ From the table we see that the relative error decreases the more splits we have.
 - Use pruning to select a tree with a suitable size. Determine this smaller tree and inspect and describe it.
 
 ```{r}
+imin <- which.min(tree_overfit$cptable[, "xerror"])
+select <- which(tree_overfit$cptable[, "xerror"] 
+                < sum(tree_overfit$cptable[imin, c("xerror", "xstd")]))[1]
 # Use pruning
-cv_tree <- prune(tree_overfit, 
-                 cp = tree_overfit$cptable[which.min(tree_overfit$cptable[,"xerror"]),"CP"])
+cv_tree <- prune(tree_overfit, cp = tree_overfit$cptable[select, "CP"])
 printcp(cv_tree)
 rpart.plot(cv_tree)
 
 ```
 As we can see we now only have two levels left, so the tree got a lot simpler. We only have the prediction if someone lives or dies, based on the variable loc, which holds the information if someone is in a coma, is stuporous or is concious (nothing). We can interpret the tree easily now, but we also don't consider the impact of other variables on the outcome.
-
 
 ## Task 7
 
