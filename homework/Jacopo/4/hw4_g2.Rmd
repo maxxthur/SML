@@ -69,7 +69,7 @@ where $y$ is a categorical variable with values 1, 2, 3, which occur with equal 
 Here we simply sample the classes in y, the white noise $\epsilon$ to generate the observations $x$.
 
 ```{r}
-set.seed(1910)
+set.seed(137)
 data_gen <- function(n_samples){
   
   i <- 1
@@ -134,7 +134,7 @@ impurity_calculate <- function(df, class = "y", col = "x", thresh, FUN){
   res[is.nan(res)] <- 0
   
   # Weighted impurity measure for the split.
-  res_w <- res/nobs
+  res_w <- res*nobs
   
   # Return the overall impurity as the sum for each group
   return(sum(res_w))
@@ -197,4 +197,4 @@ barplot(best_gini, main = "Best Gini")
 barplot(best_deviance, main = "Best Deviance")
 barplot(best_misc, , main = "Best Misclassification")
 ```
-
+From the results, we see that the for both the Deviance and the Misclassification error, the threshold at 2 is performs significantly better, whether for the Gini Index, this is not true anymore and the extreme split points are better performing. One explanation we can give around this, is the fact that for the Misclassification error, the scaled up coefficients turn out to be larger for the subgroup containing the majority of observations, i.e. the ones subgroups $\{obs_i>1.5\}$, $\{obs_i<2.5\}$. Hence, this is clear from the results. We note that the Deviance behaves in a similar way in comparison with the Misclassification error, selecting 2 as the best threshold. The Gini Index is the one which selects the split at 2 the least amount of times. We interpret this with the fact that by construction having one class generally not appearing in the split, is weighted much more in the calculation rather than having a slightly more impure second node. 
