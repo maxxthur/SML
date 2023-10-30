@@ -1,0 +1,40 @@
+---
+title: "2 task"
+author: "Marcell Frisch"
+date: '2023 10 25 '
+output: html_document
+---
+
+## 2nd task 
+
+Let $x^{(k)} _{i}$ be a sample i from the $k$ th bootstrap.
+
+then $\overline{x}^{*}_{k} =\frac{1}{n}\sum_{i} x^{(k)}_{i}$
+
+Key values we need to compute are:
+
+$$
+E x^{k}_{i} = E (E[x^{(k)}_{i}|x]) = E\overline{x}=0
+$$
+
+$$
+var(x^{(k)}_{i})=E(var(x^{(k)}_{i}|x))+var(E[x^{(k)}_{i}|x]) = \frac{n-1}{n}+\frac{1}{n}=1
+$$
+$$
+cov(x^{(1)}_{i},x^{(2)}_{j}) =E(x^{(1)}_{i}-0)(x^{(2)}_{j}-0)= E(E[x^{(1)}_{i},x^{(2)}_{j}|x])= E\overline{x}^2=\frac{1}{n}
+$$
+
+the same is true for the $(x^{(k)}_{i},x^{(k)}_{j})$ where $i{\neq }j$
+
+With above the calculation is going like this:
+
+$$
+cov(\overline{x}^{*}_{1},\overline{x}^{*}_{2})= \frac{1}{n^2}(\sum_{i,j}cov( x^{(1)}_{i},x^{(2)}_{j})) = \frac{1}{n}
+$$
+$$
+var(\overline{x}^{*}_{i})= \frac{1}{n^2}(x*var(x^{(1)}_{1})+n(n-1)*cov(x^{(1)}_{1},x^{(1)}_{2}))= \frac{2n-1}{n^2}
+$$
+$$
+\rightarrow corr(\overline{x}^{*}_{1},\overline{x}^{*}_{2})= \frac{n}{2n-1} \approx \frac{1}{2}
+$$
+
