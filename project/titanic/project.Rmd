@@ -1,0 +1,12 @@
+---
+title: "Project Group 2"
+author: "Maximilian Thur"
+date: "`r Sys.Date()`"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+

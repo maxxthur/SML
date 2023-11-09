@@ -1,0 +1,33 @@
+---
+title: "Assignment 3"
+author: "Group 2"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggthemes)
+```
+
+## Task 1
+
+## Task 2
+
+## Task 3
+
+## Task 4
+
+## Task 5
+
+## Task 6
+
+## Task 7
+
+## Task 8
+
+## Task 9
+
+## Task 10
+

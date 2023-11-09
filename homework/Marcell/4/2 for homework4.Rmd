@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ## 2nd task 
-without loss of generality, we can look at the case where $\mu=0$,$\sigma^2=1$:
+Without loss of generality, we can look at the case where $\mu=0$,$\sigma^2=1$:
 
 Let $x^{(k)} _{i}$ be a sample i from the $k$ th bootstrap.
 
