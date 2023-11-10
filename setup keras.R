@@ -13,6 +13,4 @@ install_tensorflow(envname = "r-tensorflow")
 install.packages("keras")
 library(keras)
 
-dataset_imdb(
-  
-)
+imdb <- dataset_imdb()

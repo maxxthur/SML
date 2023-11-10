@@ -87,10 +87,50 @@ results_bind %>%
 
 ## Task 10
 
-```{r}
-keras::dataset_imdb()
+```{r, results='hide'}
+library(keras)
 
+# load the data for different dictionary sizes and prepare it for analysis
+dic_size <- c(500, 1000, 3000, 5000, 10000)
 
+vectorize_sequences <- function(sequences, dimension) {
+  results <- matrix(0, nrow = length(sequences), ncol = dimension)
+  for (i in 1:length(sequences))
+    results[i, sequences[[i]]] <- 1 
+  results
+}
+
+dics <- lapply(dic_size, function(d) {
+  imdb <- dataset_imdb(num_words = d)
+  x_train <- vectorize_sequences(imdb$train$x, dimension = d)
+  x_test <- vectorize_sequences(imdb$test$x, dimension = d)
+  # Also change labels from integer to numeric
+  y_train <- as.numeric(imdb$train$y)
+  y_test <- as.numeric(imdb$test$y)
+  list(xtrain = x_train, 
+       ytrain = y_train, 
+       xtest = x_test, 
+       ytest = y_test)
+})
+
+# fit the neural network for alles sizes 
+models <- list()
+for(i in 1:length(dic_size)) {
+model <- keras_model_sequential() %>%
+  layer_dense(units = 16, activation = "relu", input_shape = dic_size[i]) %>%
+  layer_dense(units = 16, activation = "relu") 
+
+model %>% compile(
+  optimizer = "rmsprop",
+  loss = "binary_crossentropy",
+  metrics = c("accuracy")
+)
+fit_history <- model %>% fit(dics[[i]]$xtrain, dics[[i]]$ytrain, epochs = 6, batch_size = 512, validation_split = 0.2)
+
+models[[i]] <- fit_history
+}
+
+plot(models[[5]])
 ```
 
 
