@@ -9,6 +9,10 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggthemes)
+library(mvtnorm)
+library(nnet)
+library(keras)
+library(reticulate)
 ```
 
 ## Task 1
@@ -27,7 +31,66 @@ library(ggthemes)
 
 ## Task 8
 
+```{r}
+# setup
+a1 <- matrix(c(3, 3), ncol = 1) # already transposed
+a2 <- matrix(c(3, -3), ncol = 1) # already transposed
+sigmoid <- function(v) {
+  1 / (1 + exp(-v))
+}
+
+# generate X_i
+X1 <- rmvnorm(mean = c(0, 0), sigma = diag(2), n = 10100)
+X2 <- rmvnorm(mean = c(0, 0), sigma = diag(2), n = 10100)
+
+# as independent sampling, first 100 are training and rest is 
+fX <- sigmoid(X1 %*% a1 ) + sigmoid(X2 %*% a2)
+
+# signal-to-noise ratio is Var(fX)/Var(noise) = 4
+var_noise <- var(fX)/4
+
+# as you didnt specify mu for noise we assume 0
+noise <- rnorm(n = 10100, sd = sqrt(var_noise))
+
+# make training data 
+df <- tibble(Y = fX + noise, X1 = I(X1), X2 = I(X2))
+train <- df[1:100, ]
+
+# fit the neural nets
+results <- lapply(0:10, function(size) {
+  
+  weights <- lapply(1:10, function(x) abs(rnorm(100, mean = 0, sd = 0.01))) # generate random numbers near 0
+  
+  fits <- lapply(weights, function(w) nnet(formula = Y ~ ., data = train, size = size, decay = 0.0005, skip = T, weights = w))
+  preds <- lapply(fits, predict, newdata = df[-(1:100), ])
+  avg_train_err <- lapply(preds, function(p) mean((df[-(1:100),]$Y - p)^2))
+  data.frame(size = size, err = unlist(avg_train_err))
+})
+
+# bind the results 
+results_bind <- bind_rows(results) 
+means <- results_bind %>% 
+  group_by(size) %>% 
+  summarise(err = median(err))
+
+# visualize with box and line plot
+results_bind %>% 
+  ggplot() +
+  geom_boxplot(aes(x = size, y = err, group = size), width = 0.25) +
+  geom_line(data = means, aes(x = size, y = err)) +
+  scale_x_continuous(breaks = 0:10)
+
+```
+
+
 ## Task 9
 
 ## Task 10
+
+```{r}
+keras::dataset_imdb()
+
+
+```
+
 
