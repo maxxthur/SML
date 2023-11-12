@@ -1,0 +1,170 @@
+---
+title: "3rd exercise for homework5"
+author: "Marcell Frisch"
+date: '2023 11 02 '
+output: html_document
+---
+
+## a) part
+
+```{r}
+# Define the logistic function
+logistic_function <- function(x) {
+  return(exp(x) / (1 + exp(x)))
+}
+
+# Calculate the Bayes error
+bayes_error <- function() {
+  # Probability of Y=0
+  p_y0 <- 0.5
+  
+  # Probability of Y=1
+  p_y1 <- 0.5
+  
+  # Calculate the probability of misclassification for Y=0
+  misclassify_y0 <- 1 - pnorm(0.5, mean = 0, sd = 1)
+  
+  # Calculate the probability of misclassification for Y=1
+  misclassify_y1 <- pnorm(0.5, mean = 0, sd = 1)
+  
+  # Calculate the Bayes error
+  bayes_error <- p_y0 * misclassify_y0 + p_y1 * misclassify_y1
+  
+  return(bayes_error)
+}
+
+# Calculate and print the Bayes error
+bayes_error_value <- bayes_error()
+cat("Bayes Error:", bayes_error_value, "\n")
+
+```
+
+
+## b) part
+
+```{r}
+# Define a function to calculate the test error for a constant classifier
+constant_classifier_test_error <- function(y_true, predicted_class) {
+  misclassification_rate <- mean(y_true != predicted_class)
+  return(misclassification_rate)
+}
+
+# Generate some test data and ground truth labels
+set.seed(123)  # Set a seed for reproducibility
+n_test_samples <- 1000
+y_true <- rbinom(n_test_samples, size = 1, prob = 0.5)  # Simulate true labels
+
+# Create a vector of predicted labels always equal to 1
+predicted_class_1 <- rep(1, n_test_samples)
+
+# Calculate the test error for the constant classifier
+test_error <- constant_classifier_test_error(y_true, predicted_class_1)
+
+cat("Test Error (Constant Classifier):", test_error, "\n")
+
+```
+
+## c) part
+
+```{r}
+# Define a function to calculate the test error for the specified rule
+rule_classifier_test_error <- function(x_test, y_true) {
+  # Predict 1 for positive X and 0 otherwise
+  predicted_class <- ifelse(x_test > 0, 1, 0)
+  
+  # Calculate the test error
+  misclassification_rate <- mean(y_true != predicted_class)
+  return(misclassification_rate)
+}
+
+# Generate some test data (X_test) and ground truth labels (y_true)
+set.seed(123)  # Set a seed for reproducibility
+n_test_samples <- 1000
+X_test <- rnorm(n_test_samples)  # Simulate test data
+y_true <- rbinom(n_test_samples, size = 1, prob = 0.5)  # Simulate true labels
+
+# Calculate the test error for the rule-based classifier
+test_error <- rule_classifier_test_error(X_test, y_true)
+
+cat("Test Error (Rule-Based Classifier):", test_error, "\n")
+
+```
+
+
+
+
+## Task 6
+
+
+```{r}
+library(randomForest)
+
+# Function to generate binary dependent variable
+generate_binary_variable <- function(X, q, J) {
+  sum_X_j <- rowSums(X[, 1:J])
+  probabilities <- q + (1 - 2 * q) * as.numeric(sum_X_j > J / 2)
+  return(factor(rbinom(n = length(probabilities), size = 1, prob = probabilities), levels = c(0, 1)))
+}
+
+# Parameters
+set.seed(123)  # Set seed for reproducibility
+N_train <- 300
+N_test <- 500
+repetitions <- 50
+q <- 0.1
+J_values <- c(5, 25, 50, 100, 150)
+
+# Results storage
+misclassification_rates <- matrix(NA, nrow = repetitions, ncol = length(J_values))
+
+# Loop over different numbers of noise predictor variables
+for (j in seq_along(J_values)) {
+  J <- J_values[j]
+  
+  for (rep in 1:repetitions) {
+    # Generate training data
+    X_train <- matrix(runif(N_train * (J + J), 0, 1), ncol = (J + J))
+    Y_train <- generate_binary_variable(X_train, q, J)
+    
+    # Generate test data
+    X_test <- matrix(runif(N_test * (J + J), 0, 1), ncol = (J + J))
+    Y_test <- generate_binary_variable(X_test, q, J)
+    
+    # Fit random forest
+    rf_model <- randomForest(X_train, Y_train, mtry = sqrt(ncol(X_train)))
+    
+    # Predict on test set
+    Y_pred <- predict(rf_model, X_test)
+    
+    # Calculate misclassification rate
+    misclassification_rate <- mean(Y_pred != Y_test)
+    
+    # Store the result
+    misclassification_rates[rep, j] <- misclassification_rate
+  }
+}
+
+
+
+```
+
+
+```{r}
+library(ggplot2)
+
+# Convert misclassification_rates matrix to a data frame
+misclassification_df <- data.frame(
+  Repetition = rep(1:repetitions, each = length(J_values)),
+  J = rep(J_values, times = repetitions),
+  Misclassification_Rate = as.vector(misclassification_rates)
+)
+
+# Create a boxplot
+ggplot(misclassification_df, aes(x = as.factor(J), y = Misclassification_Rate, fill = as.factor(J))) +
+  geom_boxplot() +
+  labs(title = "Test Misclassification Rates for Different Numbers of Noise Predictor Variables",
+       x = "Number of Noise Predictor Variables (J)",
+       y = "Misclassification Rate") +
+  theme_minimal()
+```
+
