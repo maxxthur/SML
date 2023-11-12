@@ -10,10 +10,170 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggthemes)
 ```
+---
+title: "Untitled"
+author: "Tobias Kraler"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
 
-## Task 1
 
-## Task 2
+## 1
+
+We want to obtain the solution for
+$$
+(\beta_m, G_m) = \arg \min_{\beta, G} \sum_{i=1}^{N} w^{(m)}_i \exp\left(-\beta y_i G(x_i)\right)
+$$
+with $w^{(m)}_i = exp(-y_i f_{m-1}(x_i))$. For this we first rewrite:
+$$
+\sum_{i=1}^{N} w^{(m)}_i \exp\left(-\beta y_i G(x_i)\right)
+$$
+$$
+= \sum_{i=1}^{N} w^{(m)}_i \exp\left(\beta\right) I[y_i \neq G(x_i)] + \sum_{i=1}^{N} w^{(m)}_i \exp\left(-\beta\right) I[y_i = G(x_i)]
+$$
+$$
+= \sum_{i=1}^{N} w^{(m)}_i \exp\left(\beta\right) I[y_i \neq G(x_i)] + \sum_{i=1}^{N} w^{(m)}_i \exp\left(-\beta\right) (1 - I[y_i \neq G(x_i)])
+$$
+$$
+= (\exp(\beta) - \exp(-\beta))\sum_{i=1}^{N} w^{(m)}_i  I[y_i \neq G(x_i)] + \exp(-\beta) \sum_{i=1}^{N} w^{(m)}_i 
+$$
+We used here that $y_i G(x_i)$ is either $1$ or $-1$ as $G(x_i)$ is the output of a binary classifier.
+Therefore we have that:
+$$
+(\beta_m, G_m) = \arg \min_{\beta, G} \sum_{i=1}^{N} w^{(m)}_i \exp\left(-\beta y_i G(x_i)\right)
+$$
+$$
+= \arg \min_{\beta, G} (\exp(\beta) - \exp(-\beta))\sum_{i=1}^{N} w^{(m)}_i  I[y_i \neq G(x_i)] + \exp(-\beta) \sum_{i=1}^{N} w^{(m)}_i 
+$$
+Therefore we get that
+$$
+G_m = \arg \min_{G} \sum_{i=1}^{N} w^{(m)}_i  I[y_i \neq G(x_i)],
+$$
+which is the classifier minimizing the weighted error rate in predicting $y$. In the next step we plug in $G_m$ and then solve:
+$$
+\beta_m = \arg \min_{\beta} (\exp(\beta) - \exp(-\beta))\sum_{i=1}^{N} w^{(m)}_i  I[y_i \neq G_m(x_i)] + \exp(-\beta) \sum_{i=1}^{N} w^{(m)}_i 
+$$
+We do that by taking the derivative wrt. $\beta$ and then setting it to zero:
+$$
+\frac{\partial}{\partial \beta} = (\exp(\beta) + \exp(-\beta))\sum_{i=1}^{N} w^{(m)}_i  I[y_i \neq G_m(x_i)] - \exp(-\beta) \sum_{i=1}^{N} w^{(m)}_i = 0
+$$
+$$
+\Leftrightarrow \quad (\exp(\beta) + \exp(-\beta)) \frac{\sum_{i=1}^{N} w^{(m)}_i  I[y_i \neq G_m(x_i)]}{\sum_{i=1}^{N} w^{(m)}_i} = \exp(-\beta)
+$$
+Now let
+$$
+err_m = \frac{\sum_{i=1}^{N} w^{(m)}_i  I[y_i \neq G_m(x_i)]}{\sum_{i=1}^{N} w^{(m)}_i}
+$$
+be the minimized weighted error rate. Then we get:
+$$
+\Leftrightarrow \quad (\exp(\beta) + \exp(-\beta)) err_m = \exp(-\beta) \quad \Leftrightarrow \quad \exp(\beta) err_m = \exp(-\beta) (1 - err_m)
+$$
+$$
+\Leftrightarrow \quad \log(\exp(\beta) err_m) = \log(\exp(-\beta) (1 - err_m)) \quad \Leftrightarrow \quad \beta + \log(err_m) = -\beta + \log((1 - err_m))
+$$
+$$
+\Leftrightarrow \quad 2 \beta = \log((1 - err_m)) - \log(err_m) \quad \Leftrightarrow \quad \beta = \frac{1}{2} \log \left(\frac{1 - err_m}{err_m} \right)
+$$
+Therefore we get:
+$$
+\beta_m = \frac{1}{2} \log \left(\frac{1 - err_m}{err_m} \right)
+$$
+With those two steps the solution to
+$$
+(\beta_m, G_m) = \arg \min_{\beta, G} \sum_{i=1}^{N} w^{(m)}_i \exp\left(-\beta y_i G(x_i)\right)
+$$
+can be obtained.
+
+
+## 2
+
+Assume $Y \in \{1, -1\}$.
+
+- The population minimizer for the exponential loss is:
+$$
+f^\star(x) = \arg \min_{f(x)} E_{Y|x} \left(e^{-Y f(x)} \right) = \arg \min_{f(x)} \Pr(Y = +1|x) e^{-f(x)} + \Pr(Y = -1|x) e^{f(x)}
+$$
+Now taking the derivative wrt. $f(x)$ and setting to zero:
+$$
+\frac{\partial}{\partial f(x)} = -\Pr(Y = +1|x) e^{-f(x)} + \Pr(Y = -1|x) e^{f(x)} = 0
+$$
+$$
+\Leftrightarrow \quad \Pr(Y = -1|x) e^{f(x)} = \Pr(Y = +1|x) e^{-f(x)} \quad \Leftrightarrow \quad f(x) + \log(\Pr(Y = -1|x)) = -f(x) + \log(\Pr(Y = +1|x))
+$$
+$$
+\Leftrightarrow \quad 2 f(x) = \log(\Pr(Y = +1|x)) - \log(\Pr(Y = -1|x))  \quad \Leftrightarrow \quad f(x) = \frac{1}{2} \log \left(\frac{\Pr(Y = +1|x)}{\log(\Pr(Y = -1|x))} \right)
+$$
+Therefore we have:
+$$
+f^\star(x) = \arg \min_{f(x)} E_{Y|x} \left(e^{-Y f(x)} \right) = \frac{1}{2} \log \left(\frac{\Pr(Y = +1|x)}{\log(\Pr(Y = -1|x))} \right)
+$$
+
+- The population minimizer for the deviance loss is:
+$$
+p^\star(x) = \arg \min_{p(x)} E_{Y|x} \left(\frac{Y + 1}{2} \log(p(x)) + \left( 1- \frac{Y - 1}{2} \right) \log(1 - p(x)) \right)
+$$
+$$
+ = \arg \min_{p(x)} E_{Y|x} \left(\frac{Y + 1}{2} \log(p(x)) + \frac{1 - Y}{2} \log(1 - p(x)) \right)
+$$
+$$
+= \arg \min_{p(x)} \Pr(Y = +1|x) \left(\frac{2}{2} \log(p(x)) + \frac{0}{2} \log(1 - p(x)) \right) + \Pr(Y = -1|x) \left(\frac{0}{2} \log(p(x)) + \frac{2}{2} \log(1 - p(x)) \right)
+$$
+$$
+= \arg \min_{p(x)} \Pr(Y = +1|x) \log(p(x)) + \Pr(Y = -1|x) \log(1 - p(x))
+$$
+
+Now derivate wrt. $p(x)$ and set to zero:
+$$
+\frac{\partial}{\partial p(x)} = \frac{\Pr(Y = +1|x)}{p(x)} - \frac{\Pr(Y = -1|x)}{1 - p(x)} = 0
+$$
+$$
+\Leftrightarrow \quad \Pr(Y = +1|x) (1 - p(x)) - \Pr(Y = -1|x) p(x) = 0
+$$
+$$
+\Leftrightarrow \quad \Pr(Y = +1|x) - \Pr(Y = +1|x) p(x) - \Pr(Y = -1|x) p(x) = 0
+$$
+$$
+\Leftrightarrow \quad \Pr(Y = +1|x)  = \Pr(Y = +1|x) p(x) + \Pr(Y = -1|x) p(x)
+$$
+$$
+\Leftrightarrow \quad \Pr(Y = +1|x)  = (\Pr(Y = +1|x) + \Pr(Y = -1|x)) p(x)
+$$
+$$
+\Leftrightarrow \quad p(x) = \frac{\Pr(Y = +1|x)}{\Pr(Y = +1|x) + \Pr(Y = -1|x)}
+$$
+$$
+\Leftrightarrow \quad p(x) = \Pr(Y = +1|x)
+$$
+as $\Pr(Y = +1|x) + \Pr(Y = -1|x) = 1$. Therefore we have:
+$$
+p^\star(x) = \arg \min_{p(x)} E_{Y|x} \left(\frac{Y + 1}{2} \log(p(x)) + \left( 1- \frac{Y - 1}{2} \right) \log(1 - p(x)) \right) = \Pr(Y = +1|x)
+$$
+
+
+- The population minimizer for squared-error loss is:
+$$
+f^\star(x) = \arg \min_{f(x)} E_{Y|x} \left[ \left(Y - f(x) \right)^2 \right] 
+$$
+Derive wrt. $f(x)$ and set to zero:
+$$
+\frac{\partial}{\partial f(x)} = E_{Y|x} \left[-2 \left(Y - f(x) \right) \right] = 0
+$$
+$$
+\Leftrightarrow \quad -2 \left(E[Y|x] - f(x) \right) = 0 \quad \Leftrightarrow \quad E[Y|x] - f(x) = 0 \quad \Leftrightarrow \quad E[Y|x] = f(x)
+$$
+Therefore we get:
+$$
+f^\star(x) = \arg \min_{f(x)} E_{Y|x} \left[ \left(Y - f(x) \right)^2 \right] = E[Y|x]
+$$
+$$
+= \Pr(Y = +1|x) - \Pr(Y = -1|x) = \Pr(Y = +1|x) - (1 - \Pr(Y = +1|x)) = 2 \Pr(Y = +1|x) - 1
+$$
+So overall we have:
+$$
+f^\star(x) = \arg \min_{f(x)} E_{Y|x} \left[ \left(Y - f(x) \right)^2 \right] = E[Y|x] = 2 \Pr(Y = +1|x) - 1
+$$
+
+
 
 ## Task 3
 
