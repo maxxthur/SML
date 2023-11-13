@@ -1,33 +1,126 @@
 ---
-title: "Assignment 3"
-author: "Group 2"
-date: "`r Sys.Date()`"
+title: "hw5_g2"
+author: "Jacopo Liera"
+date: "2023-11-13"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE, message=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(tidyverse)
-library(ggthemes)
+## Exercise 4
+
+
+In this exercise we want to assess the effects of the hyperparameters for a Random Forest predictor on the icu dataset. We set the seed for replication and get the data.
+```{r}
+library(randomForest)
+library(aplore3)
+
+set.seed(1391927)
+
+#load data
+data(icu, package = "aplore3")
+head(icu)
 ```
 
-## Task 1
+Secondly, we want to determine over which values we should do the tuning of the hyper-parameters. We set high number of values for ntree to see if there is a clear impact on how many trees we grow and the out of bag error, for which we can intuitively guess that it is not going to be as relevant as the number of variables sampled for each split.
 
-## Task 2
+```{r}
+X <- icu[, 3:ncol(icu)]
+y <- icu$sta
 
-## Task 3
+mtry_vec <- seq(1, ncol(X))
+ntree_vec <- c(100, 200, 400, 800, 1200)
+```
 
-## Task 4
+We carry out the out of bag error estimates by modelling with Random Forest and then store the results in a matrix.
+```{r}
+# Compute models
+oob_errors <- function(X, y, h1 = mtry_vec, h2 = ntree_vec){
+  
+  # Matrix to store the out-of-bag errors for each combination of mtry and ntree
+  oob_mat <- matrix(rep(0, length(ntree_vec) * length(mtry_vec)), ncol = length(ntree_vec))
+  rownames(oob_mat) <- mtry_vec
+  colnames(oob_mat) <- ntree_vec
+  
+  for(m in 1:length(mtry_vec)){
+    for(n in 1:length(ntree_vec)){
+    
+      tmp <- randomForest(X, y,  mtry = h1[m], ntree = h2[n], proximity = TRUE)
+      oob_mat[m, n] <- tmp$err.rate[nrow(tmp$err.rate), "OOB"]
+    }
+  }
+  return(oob_mat)
+}
 
-## Task 5
+errors <- oob_errors(X, y, h1 = mtry_vec, h2 = ntree_vec)
+errors
+```
 
-## Task 6
+We should carry out this exercise many times to have an average estimate on the importance. In this specific iteration we see that already with 2 candidates for the split and really number of trees we get the minimum out of bag error. The second minimum is located with high number of candidates (13) and 200 trees, which is somewhat more informative.
+```{r}
+# Find best combination based on oob
+best_combo <- which(errors == min(errors), arr.ind = TRUE)
 
-## Task 7
+# If multiple minima are achieved, just take the lowest amount of iterations
+if(dim(best_combo)[1]>1) best_combo <- best_combo[1, ]
 
-## Task 8
+ntree <- as.integer(colnames(errors)[best_combo[2]])
+mtry <- as.integer(rownames(errors)[best_combo[1]])
+```
 
-## Task 9
 
-## Task 10
+```{r}
+#fit the model with the optimal values
+tuned_model <- randomForest(x = X, y, mtry = mtry, ntree = ntree, importance = TRUE)
+varImpPlot(tuned_model)
+```
+
+```{r}
+sapply(X, is.numeric)
+```
+
+The difference between the two graphs is immediately clear if we look at the most important variable sys for gini and loc for mean decrease in accuracy. Gini Impurity is a measure which really just depends on the training data and makes no effort into making sure that such models would survive in a validation set, or based on out of bag errors. Hence, the use of numerical variables makes it easier to overfit the data in a splitting setting, hence why we see the differences.
+
+## Exercise 5
+
+This task connects with the preceding one, in the sense that we will see differences in Gini and Accuracy decrease for each variable in the simulation study. We fit random forests algorithm with ntree = 100 which was previously the minimum in exercise 4. We see that once again that the Gini heavily relies to the training data  and not on OOB samples. The accuracy measure is based on permutation feature importance, which consists in measuring the increase in the model error related to the permutation of a feature’s values. In the end, all variables are ranked, where the most important ones are those which most contributed in rendering the model worse once their values have been shuffled. On the other hand, if by permuting the values of a feature, the model error does not increase, this would signify that the variable does not influence the model predictions. This measure is based on OOB mean squared error with permutated variables minues the normal OOB squared error, hence the difference in results.
+
+```{r}
+library(randomForest)
+
+datagen <- function(N){
+  
+  # Predictors
+  x1 <- rnorm(N, mean = 0, sd = 1)
+  x2 <- runif(N, min = 0, max = 1)
+  x3 <- sample(1:2, N, replace = TRUE)
+  x4 <- sample(1:5, N, replace = TRUE)
+  
+  # Dependent variable
+  y <- as.factor(sample(0:1, N, replace = TRUE))
+  
+  return(data.frame(y, x1, x2, x3, x4))
+}
+
+VI_calculate <- function(x){
+  
+  model <- randomForest(y ~ ., data = x, importance = TRUE, ntree = 100)
+  
+  accuracy <- model$importance[,"MeanDecreaseAccuracy"]
+  gini <- model$importance[, "MeanDecreaseGini"]
+  
+  return(list(gini = gini, accuracy = accuracy))
+}
+
+datasets <- replicate(100, datagen(N = 200), simplify = FALSE)
+res <- lapply(datasets, VI_calculate)
+
+Gini <- sapply(res, function(x) x$gini)
+Accuracy <- sapply(res, function(x) x$accuracy)
+
+mean_accuracy <- rowMeans(Accuracy)
+mean_gini <- rowMeans(Gini)
+
+par(mfrow = c(1, 2))
+barplot(mean_gini[order(mean_gini)], horiz = TRUE, xlab = "Gini Impurity Decrease", col = "darkblue")
+barplot(mean_accuracy[order(mean_accuracy)], horiz = TRUE, xlab = "Accuracy Decrease", col = "darkblue")
+```
 
