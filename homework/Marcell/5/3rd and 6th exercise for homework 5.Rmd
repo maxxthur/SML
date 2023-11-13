@@ -1,5 +1,5 @@
 ---
-title: "3rd exercise for homework5"
+title: "3rd and 6th exercises for homework5"
 author: "Marcell Frisch"
 date: '2023 11 02 '
 output: html_document
@@ -7,32 +7,61 @@ output: html_document
 
 # Task 3
 
-
 ## Determine the Bayes error for this classification problem.
+
+#### Step 1: Logit Transformation
+Starting with the logit transformation of the probability:
+\[ \text{logit}(\pi(X)) = X \]
+
+#### Step 2: Exponentiation
+Exponentiating both sides to remove the logarithm:
+\[ e^X = \frac{\pi(X)}{1 - \pi(X)} \]
+
+#### Step 3: Solve for \(\pi(X)\)
+Rearranging the terms to solve for \(\pi(X)\):
+\[ e^X(1 - \pi(X)) = \pi(X) \]
+
+#### Step 4: Simplification
+Further simplification:
+\[ e^X - e^X \pi(X) = \pi(X) \]
+
+#### Step 5: Solve for \(\pi(X)\)
+\[ \pi(X) + e^X \pi(X) = e^X \]
+\[ \pi(X)(1 + e^X) = e^X \]
+\[ \pi(X) = \frac{e^X}{1 + e^X} \]
+
+#### Step 6: Probability of \(Y=1\) and \(Y=0\)
+Therefore, the probability of \(Y=1\) given \(X\) is:
+\[ \text{Pr}(Y=1 \mid X) = \pi(X) = \frac{e^X}{1 + e^X} \]
+
+And the probability of \(Y=0\) given \(X\) is:
+\[ \text{Pr}(Y=0 \mid X) = 1 - \pi(X) = \frac{1}{1 + e^X} \]
+
+###  Bayes Error Definition
+The Bayes error is the lowest possible error any classifier can achieve. It is the expectation of the minimum posterior probability, averaged over the distribution of \(X\):
+\[ \text{Bayes Error} = \int_{-\infty}^{\infty} \min\left(\frac{e^X}{1 + e^X}, \frac{1}{1 + e^X}\right) \frac{1}{\sqrt{2\pi}} e^{-\frac{x^2}{2}} dx \]
+
 
 ```{r}
 rm(list = ls())
 
-# Define the logistic function
-logistic_function <- function(x) exp(x) / (1 + exp(x))
 
-# Define the integrand for X < 0
-integrand_for_negative_X <- function(x) logistic_function(x) * dnorm(x)
+integrand <- function(x) {
+p1 <- exp(x) / (1 + exp(x))
+min_p <- min(p1, 1 - p1)
+min_p * (1 / sqrt(2 * pi)) * exp(-xˆ2 / 2)
+}
 
-# Define the integrand for X > 0
-integrand_for_positive_X <- function(x) (1 - logistic_function(x)) * dnorm(x)
+# Perform the numerical integration
+result <- integrate(integrand, lower = -Inf, upper = Inf)
 
-# Perform numerical integration for X < 0
-bayes_error_negative <- integrate(integrand_for_negative_X, lower = -Inf, upper = 0)
+# Calculate the Bayes error
+bayes_error <- result$value
 
-# Perform numerical integration for X > 0
-bayes_error_positive <- integrate(integrand_for_positive_X, lower = 0, upper = 550)
+# Print the Bayes err
 
-# Calculate the total Bayes Error
-total_bayes_error <- bayes_error_negative$value + bayes_error_positive$value
+print(bayes_error)
 
-# Print the Bayes Error
-print(total_bayes_error)
 
 
 
