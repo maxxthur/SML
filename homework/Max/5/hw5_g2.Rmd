@@ -13,6 +13,7 @@ library(mvtnorm)
 library(nnet)
 library(keras)
 library(reticulate)
+library(patchwork)
 ```
 
 ## Task 1
@@ -87,12 +88,15 @@ results_bind %>%
 
 ## Task 10
 
+We first fit the fully connected neural network with two hidden layers for all dictionary sizes as the case of size 1000 is nested there. We also collect data about the evolution of the network to visualize results later. 
+
 ```{r, results='hide'}
 library(keras)
 
 # load the data for different dictionary sizes and prepare it for analysis
 dic_size <- c(500, 1000, 3000, 5000, 10000)
 
+# implwmwnr one hot encoding
 vectorize_sequences <- function(sequences, dimension) {
   results <- matrix(0, nrow = length(sequences), ncol = dimension)
   for (i in 1:length(sequences))
@@ -113,24 +117,98 @@ dics <- lapply(dic_size, function(d) {
        ytest = y_test)
 })
 
-# fit the neural network for alles sizes 
+# fit the neural network for all sizes 
 models <- list()
 for(i in 1:length(dic_size)) {
 model <- keras_model_sequential() %>%
   layer_dense(units = 16, activation = "relu", input_shape = dic_size[i]) %>%
-  layer_dense(units = 16, activation = "relu") 
+  layer_dense(units = 16, activation = "relu") %>% 
+  layer_dense(units = 1, activation = "sigmoid")
 
 model %>% compile(
   optimizer = "rmsprop",
   loss = "binary_crossentropy",
   metrics = c("accuracy")
 )
-fit_history <- model %>% fit(dics[[i]]$xtrain, dics[[i]]$ytrain, epochs = 6, batch_size = 512, validation_split = 0.2)
+fit_history <- model %>% fit(dics[[i]]$xtrain, dics[[i]]$ytrain, epochs = 20, batch_size = 512, validation_split = 0.2)
 
 models[[i]] <- fit_history
 }
 
-plot(models[[5]])
+
+# collect the histories of all models
+plot_dat_list <- list()
+for(i in 1:length(models)) {
+  n <- models[[i]]$params$epochs
+  plot_dat_list[[i]] <- tibble(loss = c(models[[i]]$metrics$loss, models[[i]]$metrics$val_loss), 
+                         accuracy = c(models[[i]]$metrics$accuracy, models[[i]]$metrics$val_accuracy), 
+                         name = c(rep("training", n), rep("validation", n)), 
+                         epoch = rep(1:n, 2),
+                         size = dic_size[i])
+}
+
+plot_dat <- bind_rows(plot_dat_list) %>% 
+  pivot_longer(cols = c(loss, accuracy), 
+               names_to = "metric")
+
+```
+### a)
+
+
+```{r}
+# plot of loss and accuracy evolving over epochs
+plot_dat %>% 
+  filter(size == 1000) %>% 
+  ggplot(aes(x = epoch, y = value, color = name)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  facet_wrap(~metric, nrow = 2) +
+  labs(y = "") +
+  theme(legend.title = element_blank())
+
+plot_dat %>% 
+  filter(size == 1000 & epoch == 20) 
+
+```
+We see that with our specification we get quite high accuracy for training and validation data sets. However, looking at the plot showing the evolution of loss and accuracy over the epochs that accuracy and loss actually diverge as the network evolves. This shows that 20 epochs might result in overfitting. 
+
+### b)
+
+We can now put a) in context using the results for different dictionary sizes.
+
+We first look at the evolution of accuracy. We see that accuracy for the training and validation data set rise both up to a dictionary comprising the 3000 most frequent tokens. However, then accuracy for the validation data decreases again and stays constant thereafter just below 85 percent.
+
+```{r}
+plot_dat %>% 
+  filter(epoch == 20 & metric == "accuracy") %>% 
+  ggplot(aes(x = size, y = value, color = name)) +
+  geom_point() +
+  geom_line() +
+  labs(y = "accuracy") +
+  theme(legend.title = element_blank())
 ```
 
+Second we want to have a look at how accuracy and loss evolve over epochs for each size. 
 
+```{r}
+# plot for loss
+plot_dat %>% 
+  filter(metric == "loss") %>% 
+  ggplot(aes(x = epoch, y = value, color = name)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  facet_wrap(~size, nrow = 2) +
+  labs(y = "loss") +
+  theme(legend.title = element_blank())
+
+# plot for accuracy
+plot_dat %>% 
+  filter(metric == "accuracy") %>% 
+  ggplot(aes(x = epoch, y = value, color = name)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  facet_wrap(~size, nrow = 2) +
+  labs(y = "accuracy") +
+  theme(legend.title = element_blank())
+```
+We see that with larger dictionaries the training and test accuracies diverge more and more over the epochs. It is quite obvious that the network suffers from overfitting that becomes worse when more tokens are considered.
