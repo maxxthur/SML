@@ -5,89 +5,125 @@ date: '2023 11 02 '
 output: html_document
 ---
 
-## a) part
+# Task 3
+
+
+## Determine the Bayes error for this classification problem.
 
 ```{r}
+rm(list = ls())
+
 # Define the logistic function
-logistic_function <- function(x) {
-  return(exp(x) / (1 + exp(x)))
-}
+logistic_function <- function(x) exp(x) / (1 + exp(x))
 
-# Calculate the Bayes error
-bayes_error <- function() {
-  # Probability of Y=0
-  p_y0 <- 0.5
-  
-  # Probability of Y=1
-  p_y1 <- 0.5
-  
-  # Calculate the probability of misclassification for Y=0
-  misclassify_y0 <- 1 - pnorm(0.5, mean = 0, sd = 1)
-  
-  # Calculate the probability of misclassification for Y=1
-  misclassify_y1 <- pnorm(0.5, mean = 0, sd = 1)
-  
-  # Calculate the Bayes error
-  bayes_error <- p_y0 * misclassify_y0 + p_y1 * misclassify_y1
-  
-  return(bayes_error)
-}
+# Define the integrand for X < 0
+integrand_for_negative_X <- function(x) logistic_function(x) * dnorm(x)
 
-# Calculate and print the Bayes error
-bayes_error_value <- bayes_error()
-cat("Bayes Error:", bayes_error_value, "\n")
+# Define the integrand for X > 0
+integrand_for_positive_X <- function(x) (1 - logistic_function(x)) * dnorm(x)
+
+# Perform numerical integration for X < 0
+bayes_error_negative <- integrate(integrand_for_negative_X, lower = -Inf, upper = 0)
+
+# Perform numerical integration for X > 0
+bayes_error_positive <- integrate(integrand_for_positive_X, lower = 0, upper = 550)
+
+# Calculate the total Bayes Error
+total_bayes_error <- bayes_error_negative$value + bayes_error_positive$value
+
+# Print the Bayes Error
+print(total_bayes_error)
+
+
 
 ```
 
 
-## b) part
+## Determine the test error for the fitted model which predicts always 1.
 
 ```{r}
-# Define a function to calculate the test error for a constant classifier
-constant_classifier_test_error <- function(y_true, predicted_class) {
-  misclassification_rate <- mean(y_true != predicted_class)
-  return(misclassification_rate)
+
+rm(list = ls())
+
+# Define the corrected integrand
+integrand <- function(x) {
+1 / (1 + exp(x)) * (1 / sqrt(2 * pi)) * exp(-xˆ2 / 2)
 }
 
-# Generate some test data and ground truth labels
-set.seed(123)  # Set a seed for reproducibility
-n_test_samples <- 1000
-y_true <- rbinom(n_test_samples, size = 1, prob = 0.5)  # Simulate true labels
+# Perform the numerical integration over a large but finite interval
+result <- integrate(integrand, lower = -Inf, upper = Inf)
 
-# Create a vector of predicted labels always equal to 1
-predicted_class_1 <- rep(1, n_test_samples)
+# Calculate the test error
+test_error <- result$value 
 
-# Calculate the test error for the constant classifier
-test_error <- constant_classifier_test_error(y_true, predicted_class_1)
+# Print the test error
+print(test_error)
 
-cat("Test Error (Constant Classifier):", test_error, "\n")
+
 
 ```
 
-## c) part
+## Determine the test error for the fitted model which predicts 1 for positive X and 0 otherwise.
+
 
 ```{r}
-# Define a function to calculate the test error for the specified rule
-rule_classifier_test_error <- function(x_test, y_true) {
-  # Predict 1 for positive X and 0 otherwise
-  predicted_class <- ifelse(x_test > 0, 1, 0)
-  
-  # Calculate the test error
-  misclassification_rate <- mean(y_true != predicted_class)
-  return(misclassification_rate)
+# Define the integrands
+
+rm(list = ls())
+
+# Define the integrands
+integrand1 <- function(x) {
+  1 / (1 + exp(x)) * (1 / sqrt(2 * pi)) * exp(-x^2 / 2)
 }
 
-# Generate some test data (X_test) and ground truth labels (y_true)
-set.seed(123)  # Set a seed for reproducibility
-n_test_samples <- 1000
-X_test <- rnorm(n_test_samples)  # Simulate test data
-y_true <- rbinom(n_test_samples, size = 1, prob = 0.5)  # Simulate true labels
+integrand2 <- function(x) {
+  exp(x) / (1 + exp(x)) * (1 / sqrt(2 * pi)) * exp(-x^2 / 2)
+}
 
-# Calculate the test error for the rule-based classifier
-test_error <- rule_classifier_test_error(X_test, y_true)
+# Perform numerical integration for each part
+result1 <- integrate(integrand1, lower = 0, upper = Inf)
+result2 <- integrate(integrand2, lower = -Inf, upper = 0)
 
-cat("Test Error (Rule-Based Classifier):", test_error, "\n")
+# Calculate the test error
+test_error <- result1$value + result2$value
 
+# Print the test error
+print(test_error)
+
+# Reproduce the logic with a larger sample
+
+# Set the seed for reproducibility
+set.seed(123)
+
+# Number of simulations
+n <- 5000000
+
+# Generate random numbers from a normal distribution for X
+X <- rnorm(n, mean = 0, sd = 1)
+
+# Calculate pi(X)
+pi <- exp(X) / (1 + exp(X))
+
+# Generate true labels based on pi(X)
+true_labels <- rbinom(n, 1, pi)
+
+# Calculate Bayes Error
+bayes_error <- mean(pmin(pi, 1 - pi))
+
+# Test Error for model predicting always 1
+model_always_1_error <- mean(true_labels == 0)
+
+# Test Error for model predicting 1 for positive X and 0 otherwise
+predicted_labels <- as.numeric(X > 0)
+model_X_based_error <- mean(predicted_labels != true_labels)
+
+# Print errors
+print(paste("Bayes Error:", bayes_error))
+
+print(paste("Test Error when the model always predicts 1:", model_always_1_error))
+
+
+print(paste("Test Error when the model predicts based on X:", model_X_based_error))
 ```
 
 
