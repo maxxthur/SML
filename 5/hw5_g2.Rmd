@@ -1,0 +1,180 @@
+---
+title: "Assignment 5"
+author: "Group 2"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggthemes)
+```
+
+## Task 1
+
+## Task 2
+
+## Task 3
+
+## Task 4
+
+## Task 5
+
+## Task 6
+
+## Task 7
+```{r}
+suppressMessages(if(!requireNamespace("ElemStatLearn")) {
+  URL <- "https://cran.r-project.org/src/contrib/Archive/ElemStatLearn"      
+  install.packages(file.path(URL, "ElemStatLearn_2015.6.26.2.tar.gz"))})
+suppressMessages(if(!require(mboost)) install.packages("mboost"))
+suppressMessages(if(!require(caret)) install.packages("caret"))
+suppressMessages(if(!require(pROC)) install.packages("pROC"))
+
+data("SAheart", package="ElemStatLearn")
+set.seed(123)
+df=SAheart
+
+#Train-test split (75%-25%)
+df$id = 1:nrow(df)
+train = df %>% dplyr::sample_frac(0.75)
+test = dplyr::anti_join(df, train, by = 'id')
+train = train[-c(11)]
+test = test[-c(11)]
+train$chd = as.factor(train$chd)
+test$chd = as.factor(test$chd)
+
+
+#Logistic regression model with backward-stepwise regression
+train_x = train[, -which(names(train) == "chd")]
+train_y = train$chd
+test_x = test[, -which(names(test) == "chd")]
+test_y = test$chd
+
+lin_model = step(glm(chd ~ ., data = train, family = binomial()), direction="backward")
+summary(lin_model)
+
+boost_model = gamboost(chd ~ sbp+tobacco+ldl+adiposity+typea+obesity+alcohol+famhist+age, family=Binomial(), data = train)
+summary(boost_model)
+
+preds_lin = ifelse(predict(lin_model, newdata = test, type = "response") > 0.5, 1, 0)
+preds_boost = ifelse(predict(boost_model, newdata = test, type = "response") > 0.5, 1, 0)
+
+
+#Predictive performance of the logistic regression model
+##Confusion Matrix 
+confusionMatrix(table(preds_lin, test_y))
+
+##AUC
+auc_lin <- auc(roc(test_y, preds_lin))
+cat("AUC score of the logistic regression model: ", auc_lin)
+
+
+#Predictive performance of the boosted logistic regression model
+##Confusion Matrix 
+confusionMatrix(table(preds_boost, test_y))
+
+##AUC
+auc_boost <- auc(roc(test_y, preds_boost))
+cat("AUC score of the boosted regression model: ", auc_boost)
+
+```
+Comparing the confusion matrices, we can see that the boosted logistic regression model performs better with a higher accuracy. In addition to that, AUC score for boosted model is higher meaning that the boosted model's discriminatory power is higher.  
+
+## Task 8
+
+## Task 9
+```{r}
+suppressMessages(if(!require(ISLR2)) install.packages("ISLR2"))
+suppressMessages(if(!require(keras)) install.packages("keras"))
+suppressMessages(if(!require(tensorflow)) install.packages("tensorflow"))
+suppressMessages(if(!require(glmnet)) install.packages("glmnet"))
+
+data("Default", package = "ISLR") 
+df=Default
+
+#Train-test split
+set.seed(123)
+n = nrow(Default)
+ntest = trunc(n/3)
+testid = sample(1:n, ntest)
+
+x = model.matrix(default ~. -1, data=df)
+
+train_x = x[-testid,]
+test_x = x[testid,]
+
+train_y = df$default[-testid]=='Yes'
+test_y = df$default[testid] == 'Yes'
+
+#Fit a neural network
+nn_model = keras_model_sequential() %>% 
+  layer_dense(units=10, activation='relu', input_shape=ncol(x)) %>%
+  layer_dropout(rate=0.4) %>% 
+  layer_dense(units = 1, activation='sigmoid')
+
+nn_model %>% compile(
+  optimizer=optimizer_rmsprop(), 
+  loss='binary_crossentropy', 
+  metrics='accuracy')
+
+nn_fit = nn_model %>% fit(
+  x = train_x, 
+  y = train_y, 
+  epochs=11, 
+  batch_size=32)
+
+plot(nn_fit)
+
+preds_nn = predict(nn_model, test_x)
+
+#Linear logistic regression
+lin_model = glm(default~.,family="binomial", data=df[-testid,]) 
+preds_lin = predict(lin_model,newdata=df[testid,]) 
+
+
+#Comparison - Accuracy
+##Linear Regression 
+acc_lin <- mean(as.numeric(preds_lin > 0.5) == test_y)
+cat("Accuracy of the linear model: ", acc_lin)
+
+##Neural Network
+acc_nn <- mean(as.numeric(preds_nn > 0.5) == test_y)
+cat("Accuracy of the neural network model: ", acc_nn)
+
+#Comparison - Brier Scores
+##Linear Regression 
+brier_lin <- data.frame(test_y ,preds_lin=as.numeric(preds_lin > 0.5))
+brier_lin$sq_difference <- (brier_lin$preds_lin-brier_lin$test_y)^2
+brier_score_lin <- mean(brier_lin$sq_difference)
+cat("Brier score of the linear model: ", brier_score_lin)
+
+##Neural Network
+brier_nn <- data.frame(test_y ,preds_nn=as.numeric(preds_nn > 0.5))
+brier_nn$sq_difference <- (brier_nn$preds_nn-brier_nn$test_y)^2
+brier_score_nn <- mean(brier_nn$sq_difference)
+cat("Brier score of the neural network model: ", brier_score_nn)
+
+
+```
+
+Comparing the accuracy of the two models, we can see that the linear regression model performs better with a higher accuracy. In addition to that, Brier score of the linear regression model is lower. One explanation for that is, the datasets that we used are imbalanced datasets and we do have an imbalanced dataset as can be seen from the tables below. 
+
+```{r}
+table(df$default)
+
+table(train_y)
+
+table(test_y)
+```
+
+
+## Task 10
+
+
+
+
+
+
+
