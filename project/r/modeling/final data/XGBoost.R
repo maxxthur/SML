@@ -38,7 +38,7 @@ encoder <- dummyVars(~HomePlanet + Destination + Deck + Side,
 dummy <- predict(encoder, newdata = full)
 
 # 1.2) Drop dummy variable columns from original data set
-dummy.names <- c('HomePlanet','CryoSleep','Destination','Deck','Side')
+dummy.names <- c('HomePlanet','Destination','Deck','Side')
 
 full.dummy <- full[!colnames(full) %in% dummy.names]
 
@@ -49,11 +49,11 @@ full.dummy <- cbind(full.dummy,dummy)
 
 
 # 2. Drop unnecessary columns
-full.dummy.model <- full.dummy[,!colnames(full.dummy) %in% c('PassengerId','Name','family',"travel_group",'Age_Group',"Cabin_Number","total_expenditure")]
+full.dummy.model <- full.dummy[,!colnames(full.dummy) %in% c('PassengerId','Name','family',"travel_group",'Age_Group',"VIP","family_size","travel_group_size","Age","total_expenditure")]
 
 
 # 3. Scale continuous variables
-scale <- c('Age','RoomService','FoodCourt','ShoppingMall','Spa','VRDeck')
+scale <- c('RoomService','FoodCourt','ShoppingMall','Spa','VRDeck','Cabin_Number')
 full.dummy.model[,scale] <- sapply(full.dummy.model[,scale],scale)
 
 
@@ -83,16 +83,18 @@ cntrl = caret::trainControl(
 
 
 
-train.full.dummy.model$any_expenditure<-NULL
 
- 
+
+
 
 x <- as.matrix(train.full.dummy.model[, -8])
 y <- ifelse(train.full.dummy.model$Transported == 'TRUE', 1, 0)
 
-train.full.dummy.model$VIP<-as.numeric(train.full.dummy.model$VIP)
-
+train.full.dummy.model$CryoSleep<-as.numeric(train.full.dummy.model$CryoSleep)
 train.full.dummy.model$Transported<-as.numeric(train.full.dummy.model$Transported)
+train.full.dummy.model$any_expenditure<-as.numeric(train.full.dummy.model$any_expenditure)
+
+
 # Train XGB model to find optimal hyperparameters
 set.seed(123)
 train.xgb = caret::train(
@@ -139,6 +141,12 @@ pred <- predict(xgb.fit, x)
 
 
 
+# Assuming 'y' is the true class labels and 'pred' is the predicted probabilities
+roc_obj <- prediction(pred, y)
+perf <- performance(roc_obj, "tpr", "fpr")
+optimal_idx <- which.max(perf@y.values[[1]] - perf@x.values[[1]])
+Cutoff <- perf@x.values[[1]][optimal_idx]
+
 
 
 unique_levels_y <- unique(y)
@@ -162,8 +170,8 @@ print(conf_matrix)
 
 
 
-test.full.dummy.model$any_expenditure<-NULL
-test.full.dummy.model$VIP<- as.numeric(test.full.dummy.model$VIP)
+
+
 # Predict for test data set
 testx <- as.matrix(test.full.dummy.model[, -8])
 xgb.test <- predict(xgb.fit, testx)
