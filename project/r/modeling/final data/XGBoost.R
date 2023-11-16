@@ -236,7 +236,7 @@ abline(h = 1, v = 0, col = "gray", lty = 2)
 ### Creating Latex table for XGBoost-----
 
 # Create a matrix with the confusion matrix values
-conf_matrix <- matrix(c(1906, 1311, 153, 3150), nrow = 2, byrow = TRUE)
+conf_matrix <- matrix(c(1930, 1287, 116, 3187), nrow = 2, byrow = TRUE)
 
 # Create a data frame with the confusion matrix
 conf_matrix_df <- as.data.frame(conf_matrix)
@@ -251,7 +251,7 @@ print(latex_table, include.rownames = TRUE, include.colnames = TRUE, floating = 
 
 
 # Create a matrix with the confusion matrix values
-conf_matrix_test <- matrix(c(600, 85, 498, 990), nrow = 2, byrow = TRUE)
+conf_matrix_test <- matrix(c(610, 69, 488, 1006), nrow = 2, byrow = TRUE)
 
 # Create a data frame with the confusion matrix
 conf_matrix_df_test <- as.data.frame(conf_matrix_test)
