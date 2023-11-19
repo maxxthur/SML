@@ -34,14 +34,6 @@ glmfit <- glm(Transported ~ HomePlanet + CryoSleep + Deck + Cabin_Number +
                 Spa + VRDeck + any_expenditure, data = train, family = binomial(link = "logit"))
 summary(glmfit)
 
-# # Without Age and Deck because not significant
-# glmfit <- glm(Transported ~ HomePlanet + CryoSleep + Cabin_Number + 
-#                 Side + Destination + RoomService + FoodCourt + ShoppingMall + 
-#                 Spa + VRDeck + any_expenditure, data = train, family = binomial(link = "logit"))
-# summary(glmfit)
-
-
-
 # Training dataset
 
 # Changing transported to 1 and otherwise 0
@@ -54,19 +46,13 @@ preds_t = ifelse(preds_train>0.5, 1, 0)
 temp_t = table(train$Transported, preds_t)
 print(temp_t)
 
+# Rows are the actual results and columns the predictions
 accuracy_t <- (temp_t[1]+temp_t[4])/sum(temp_t)
 accuracy_t
 sensitivity_t <- temp_t[4]/(temp_t[4]+temp_t[3])
 sensitivity_t
 specificty_t <- temp_t[1]/(temp_t[1]+temp_t[2])
 specificty_t
-
-# library(ROCR)
-# pred <- prediction(preds_t, train$Transported)
-# perf <- performance(pred, "tpr", "fpr")
-# plot(perf, colorize=TRUE)
-# 
-# unlist(slot(performance(pred, "auc"), "y.values"))
 
 
 # Test dataset
@@ -83,6 +69,8 @@ preds = ifelse(preds_test>0.5, 1, 0)
 
 #To compute the validation set error and false positive ratio we use the
 #confusion matrix.
+
+# Rows are the actual results and columns the predictions
 temp = table(test$Transported, preds)
 print(temp)
 
